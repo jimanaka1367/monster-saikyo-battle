@@ -97,8 +97,12 @@ export default function Home() {
           </div>
 
           <div className="grid gap-5 md:grid-cols-2">
-            {characters.map((character) => (
-              <CharacterCard key={character.id} character={character} />
+            {characters.map((character, index) => (
+              <CharacterCard
+                key={character.id}
+                character={character}
+                priorityImage={index === 0}
+              />
             ))}
           </div>
         </div>

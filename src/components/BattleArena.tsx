@@ -3,236 +3,271 @@
 import { useMemo, useState } from "react";
 import { characters } from "@/src/data/characters";
 import type { MonsterCharacter } from "@/src/data/characters";
+import { MonsterArtwork } from "@/src/components/MonsterArtwork";
 import { createBattleResult } from "@/src/lib/battle";
-import type { BattleResult } from "@/src/lib/battle";
+import type { BattleResult, BattleScore } from "@/src/lib/battle";
 
 type BattlePhase = "ready" | "opening" | "middle" | "result";
 
 const phaseLabels: Record<BattlePhase, string> = {
   ready: "対戦準備",
-  opening: "開始",
-  middle: "中間演出",
+  opening: "召喚開始",
+  middle: "必殺技",
   result: "決着",
 };
 
-const statTotal = (character: MonsterCharacter): number => {
-  return (
-    character.stats.hp +
-    character.stats.attack +
-    character.stats.defense +
-    character.stats.speed +
-    character.stats.magic
-  );
+const phaseStyles: Record<BattlePhase, string> = {
+  ready: "from-zinc-950 via-black to-purple-950/50",
+  opening: "from-amber-950/40 via-black to-red-950/50",
+  middle: "from-red-950/55 via-black to-purple-950/70",
+  result: "from-amber-900/45 via-black to-purple-950/60",
 };
 
-const formatScore = (score: number): string => {
-  return score.toFixed(1);
+const formatScore = (score: number): string => score.toFixed(1);
+
+const getScoreForCharacter = (
+  character: MonsterCharacter,
+  result: BattleResult | null,
+): BattleScore | null => {
+  if (!result) {
+    return null;
+  }
+
+  return result.challenger.id === character.id
+    ? result.challengerScore
+    : result.opponentScore;
 };
 
-type FighterPanelProps = {
-  label: string;
-  character: MonsterCharacter;
-  selectedId: string;
-  blockedId: string;
-  onChange: (id: string) => void;
+const getHpPercent = (
+  character: MonsterCharacter,
+  phase: BattlePhase,
+  result: BattleResult | null,
+): number => {
+  if (!result || phase === "ready" || phase === "opening") {
+    return 100;
+  }
+
+  const score = getScoreForCharacter(character, result);
+  const otherScore =
+    result.challenger.id === character.id
+      ? result.opponentScore
+      : result.challengerScore;
+  const scoreGap = Math.abs((score?.total ?? 0) - otherScore.total);
+
+  if (phase === "middle") {
+    return result.winner.id === character.id
+      ? Math.max(62, 88 - scoreGap * 0.12)
+      : Math.max(28, 64 - scoreGap * 0.42);
+  }
+
+  return result.winner.id === character.id ? 86 : 8;
 };
 
-function FighterPanel({
+function SelectFighter({
   label,
-  character,
-  selectedId,
+  value,
   blockedId,
   onChange,
-}: FighterPanelProps) {
+}: {
+  label: string;
+  value: string;
+  blockedId: string;
+  onChange: (id: string) => void;
+}) {
   return (
-    <div className="fantasy-panel p-4 sm:p-5">
-      <label className="fantasy-kicker">
-        {label}
-      </label>
+    <label className="block">
+      <span className="fantasy-kicker">{label}</span>
       <select
-        value={selectedId}
+        value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-3 min-h-12 w-full rounded-lg border border-red-300/35 bg-zinc-950 px-3 text-base font-black text-zinc-50 outline-none ring-1 ring-white/5 focus:border-amber-300"
+        className="mt-2 min-h-14 w-full rounded-lg border border-amber-300/25 bg-zinc-950 px-3 text-base font-black text-zinc-50 outline-none ring-1 ring-white/5 focus:border-amber-300"
       >
-        {characters.map((option) => (
+        {characters.map((character) => (
           <option
-            key={option.id}
-            value={option.id}
-            disabled={option.id === blockedId}
+            key={character.id}
+            value={character.id}
+            disabled={character.id === blockedId}
           >
-            {option.name}
+            {character.name}
           </option>
         ))}
       </select>
+    </label>
+  );
+}
 
-      <div className={`mt-4 rounded-lg bg-gradient-to-br ${character.themeColor} p-px`}>
-        <div className="rounded-lg bg-black/75 p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-xs font-bold text-zinc-400">
-                {character.category}
-              </p>
-              <h3 className="mt-1 text-2xl font-black text-zinc-50">
-                {character.name}
-              </h3>
-            </div>
-            <span className="rounded-md border border-amber-100/50 bg-amber-300 px-2 py-1 text-sm font-black text-black">
-              {character.rarity}
-            </span>
-          </div>
+function HpBar({
+  character,
+  percent,
+}: {
+  character: MonsterCharacter;
+  percent: number;
+}) {
+  const hp = Math.max(0, Math.round(character.stats.hp * (percent / 100)));
 
-          <div className="mt-3 flex flex-wrap gap-2">
-            {character.elements.map((element) => (
-              <span
-                key={element}
-                className="fantasy-badge border-purple-300/25 bg-purple-950/80 text-purple-100"
-              >
-                {element}
-              </span>
-            ))}
-          </div>
-
-          <p className="mt-4 text-sm font-bold leading-7 text-zinc-200">
-            {character.shortDescription}
-          </p>
-
-          <div className="mt-4 grid grid-cols-5 gap-2 text-center">
-            <MiniStat label="HP" value={character.stats.hp} />
-            <MiniStat label="攻撃" value={character.stats.attack} />
-            <MiniStat label="防御" value={character.stats.defense} />
-            <MiniStat label="速さ" value={character.stats.speed} />
-            <MiniStat label="魔力" value={character.stats.magic} />
-          </div>
-        </div>
+  return (
+    <div className="rounded-lg border border-white/10 bg-black/65 p-2">
+      <div className="mb-1 flex items-center justify-between gap-2 text-xs font-black">
+        <span className="text-amber-100">HP</span>
+        <span className="text-zinc-200">
+          {hp} / {character.stats.hp}
+        </span>
+      </div>
+      <div className="h-5 overflow-hidden rounded-full bg-zinc-950 ring-1 ring-white/10">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-red-700 via-amber-300 to-emerald-300 shadow-[0_0_18px_rgba(251,191,36,0.45)] transition-all duration-700"
+          style={{ width: `${percent}%` }}
+        />
       </div>
     </div>
   );
 }
 
-function MiniStat({ label, value }: { label: string; value: number }) {
+function BattleFighter({
+  character,
+  phase,
+  result,
+  side,
+}: {
+  character: MonsterCharacter;
+  phase: BattlePhase;
+  result: BattleResult | null;
+  side: "left" | "right";
+}) {
+  const hpPercent = getHpPercent(character, phase, result);
+  const isWinner = phase === "result" && result?.winner.id === character.id;
+  const isLoser = phase === "result" && result?.loser.id === character.id;
+  const isAttacking = phase === "middle" && result?.winner.id === character.id;
+  const isOpening = phase === "opening";
+  const alignClass = side === "left" ? "items-start text-left" : "items-end text-right";
+
   return (
-    <div className="rounded-md border border-white/10 bg-zinc-950/85 px-1 py-2">
-      <p className="text-[0.65rem] font-bold text-zinc-400">{label}</p>
-      <p className="mt-1 text-sm font-black text-amber-100">{value}</p>
+    <div
+      className={`relative flex min-w-0 flex-1 flex-col ${alignClass} ${
+        isWinner ? "scale-[1.06]" : isAttacking ? "scale-[1.03]" : ""
+      } transition-transform duration-700`}
+    >
+      <div className="z-10 mb-2 w-full">
+        <p className="text-xs font-black text-zinc-400">{character.category}</p>
+        <h3 className="text-xl font-black leading-tight text-zinc-50 sm:text-2xl">
+          {character.name}
+        </h3>
+      </div>
+
+      <div
+        className={`relative h-64 w-full overflow-hidden rounded-lg border bg-gradient-to-br ${character.themeColor} ${
+          isWinner
+            ? "border-amber-200/70 shadow-[0_0_34px_rgba(251,191,36,0.35)]"
+            : "border-amber-300/20 shadow-2xl shadow-black/50"
+        } ${isLoser ? "opacity-70 grayscale-[0.25]" : ""} ${
+          isOpening ? "animate-pulse" : ""
+        }`}
+      >
+        <MonsterArtwork
+          character={character}
+          imageClassName="scale-110 object-cover object-[50%_24%]"
+          priority
+          sizes="(max-width: 768px) 48vw, 38vw"
+        />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(251,191,36,0.16),transparent_35%),linear-gradient(to_top,rgba(0,0,0,0.85),transparent_70%)]" />
+        {isAttacking ? (
+          <>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(248,113,113,0.32),transparent_38%)]" />
+            <div className="absolute -left-10 top-1/2 h-8 w-[140%] -translate-y-1/2 rotate-12 bg-gradient-to-r from-transparent via-amber-200/45 to-transparent blur-sm" />
+          </>
+        ) : null}
+        {isWinner ? (
+          <div className="absolute inset-x-4 top-4 rounded-full border border-amber-200/35 bg-amber-300/15 py-2 text-center text-xs font-black tracking-[0.18em] text-amber-100">
+            WINNER
+          </div>
+        ) : null}
+      </div>
+
+      <div className="z-10 mt-2 w-full">
+        <HpBar character={character} percent={hpPercent} />
+      </div>
     </div>
   );
 }
 
-function BattleLog({
+function PhaseBanner({
   phase,
   result,
-  challenger,
-  opponent,
 }: {
   phase: BattlePhase;
   result: BattleResult | null;
-  challenger: MonsterCharacter;
-  opponent: MonsterCharacter;
 }) {
-  if (phase === "ready" || !result) {
+  if (phase === "middle" && result) {
     return (
-      <div className="rounded-lg border border-dashed border-amber-300/30 bg-black/40 p-4 sm:p-5">
-        <p className="text-sm font-bold leading-7 text-zinc-300">
-          対戦する2体を選び、「バトル開始」を押すと闘技場に召喚されます。
-          勝敗にはランダム補正が入るので、同じ組み合わせでも結果が変わります。
+      <div className="relative z-20 mb-4 rounded-lg border border-red-200/40 bg-black/75 p-4 text-center shadow-2xl shadow-red-950/70">
+        <p className="text-xs font-black tracking-[0.22em] text-red-200">
+          SPECIAL MOVE
+        </p>
+        <p className="mt-1 bg-gradient-to-r from-amber-100 via-red-300 to-purple-200 bg-clip-text text-4xl font-black leading-tight text-transparent drop-shadow-2xl sm:text-6xl">
+          {result.winner.specialMove.name}
+        </p>
+        <p className="mt-2 text-sm font-bold text-zinc-200">
+          {result.winner.name} の必殺技が闘技場を照らす！
         </p>
       </div>
     );
   }
 
-  if (phase === "opening") {
+  if (phase === "result" && result) {
     return (
-      <BattleMessage
-        title="開始演出"
-        message={result.openingMessage}
-        note={`${challenger.name} と ${opponent.name} が闇の闘技場で向かい合った！`}
-      />
-    );
-  }
-
-  if (phase === "middle") {
-    const leader =
-      result.challengerScore.total >= result.opponentScore.total
-        ? result.challenger
-        : result.opponent;
-
-    return (
-      <BattleMessage
-        title="中間演出"
-        message={result.midBattleMessage}
-        note={`${leader.name} が流れをつかみかけている。しかし勝負はまだ終わらない！`}
-      />
-    );
-  }
-
-  return (
-    <div className="fantasy-panel bg-gradient-to-br from-amber-950/35 via-black to-purple-950/45 p-4 sm:p-5">
-      <p className="fantasy-kicker">
-        決着
-      </p>
-      <h3 className="mt-2 text-3xl font-black text-amber-100 sm:text-4xl">
-        勝者 {result.winner.name}
-      </h3>
-      <p className="mt-4 whitespace-pre-line text-base font-bold leading-8 text-zinc-50">
-        {result.victoryMessage}
-      </p>
-      {result.isUpset ? (
-        <p className="mt-3 rounded-md border border-red-300/30 bg-red-950/50 px-3 py-2 text-sm font-black text-red-100">
-          まさかの番狂わせ！最後の一撃が勝負をひっくり返した！
+      <div className="relative z-20 mb-4 rounded-lg border border-amber-200/50 bg-black/78 p-5 text-center shadow-2xl shadow-amber-950/70">
+        <p className="text-xs font-black tracking-[0.24em] text-amber-200">
+          BATTLE WINNER
         </p>
-      ) : null}
-      <div className="mt-5 grid gap-3 text-sm sm:grid-cols-2">
-        <ScorePanel name={result.challenger.name} score={result.challengerScore} />
-        <ScorePanel name={result.opponent.name} score={result.opponentScore} />
+        <p className="mt-2 text-4xl font-black text-amber-100 sm:text-6xl">
+          {result.winner.name}
+        </p>
+        <p className="mt-3 text-sm font-bold leading-7 text-zinc-200">
+          {result.victoryMessage}
+        </p>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
-function BattleMessage({
-  title,
-  message,
-  note,
-}: {
-  title: string;
-  message: string;
-  note: string;
-}) {
+  if (phase === "opening" && result) {
+    return (
+      <div className="relative z-20 mb-4 rounded-lg border border-amber-200/30 bg-black/65 px-4 py-3 text-center shadow-xl shadow-black/60">
+        <p className="text-xs font-black tracking-[0.22em] text-amber-200">
+          SUMMON
+        </p>
+        <p className="mt-1 text-xl font-black text-zinc-50">
+          闇の闘技場に2体が現れた！
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="fantasy-panel bg-gradient-to-br from-red-950/40 via-black to-purple-950/40 p-4 sm:p-5">
-      <p className="fantasy-kicker">
-        {title}
+    <div className="relative z-20 mb-4 rounded-lg border border-amber-200/20 bg-black/55 px-4 py-3 text-center">
+      <p className="text-xs font-black tracking-[0.22em] text-amber-200">
+        READY
       </p>
-      <p className="mt-3 whitespace-pre-line text-base font-bold leading-8 text-zinc-50">
-        {message}
+      <p className="mt-1 text-lg font-black text-zinc-50">
+        モンスターを選んでバトル開始！
       </p>
-      <p className="mt-3 text-sm leading-7 text-zinc-300">{note}</p>
     </div>
   );
 }
 
-function ScorePanel({
-  name,
+function ScoreMini({
+  label,
   score,
 }: {
-  name: string;
-  score: BattleResult["challengerScore"];
+  label: string;
+  score: BattleScore | null;
 }) {
   return (
-    <div className="rounded-lg border border-white/10 bg-black/50 p-3">
-      <p className="font-black text-zinc-50">{name}</p>
-      <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-zinc-300">
-        <dt>基本</dt>
-        <dd className="text-right">{formatScore(score.base)}</dd>
-        <dt>ランダム</dt>
-        <dd className="text-right">{formatScore(score.random)}</dd>
-        <dt>属性</dt>
-        <dd className="text-right">+{formatScore(score.elementBonus)}</dd>
-        <dt className="font-black text-amber-200">合計</dt>
-        <dd className="text-right font-black text-amber-200">
-          {formatScore(score.total)}
-        </dd>
-      </dl>
+    <div className="rounded-lg border border-white/10 bg-black/45 p-3 text-sm">
+      <p className="font-black text-zinc-50">{label}</p>
+      <p className="mt-1 text-xs font-bold text-zinc-400">バトルスコア</p>
+      <p className="text-2xl font-black text-amber-100">
+        {score ? formatScore(score.total) : "---"}
+      </p>
     </div>
   );
 }
@@ -266,40 +301,34 @@ export function BattleArena() {
     setResult(null);
   };
 
+  const challengerScore = getScoreForCharacter(challenger, result);
+  const opponentScore = getScoreForCharacter(opponent, result);
+
   return (
     <div className="mx-auto max-w-5xl">
       <div className="mb-6">
-        <p className="fantasy-kicker">
-          BATTLE ARENA
-        </p>
+        <p className="fantasy-kicker">BATTLE ARENA</p>
         <h2 className="mt-2 text-3xl font-black text-zinc-50">
-          1対1バトル
+          1対1ビジュアルバトル
         </h2>
-        <p className="mt-3 text-sm leading-7 text-zinc-300">
-          2体を選んで、開始、中間、決着の順にバトルを進めよう。
+        <p className="mt-3 text-sm font-bold leading-7 text-zinc-300">
+          左右のモンスター、HPバー、必殺技で勝負の流れを見よう。
         </p>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_auto_1fr] lg:items-stretch">
-        <FighterPanel
+      <div className="fantasy-panel mb-5 grid gap-4 p-4 sm:grid-cols-2 sm:p-5">
+        <SelectFighter
           label="挑戦者"
-          character={challenger}
-          selectedId={challengerId}
+          value={challengerId}
           blockedId={opponentId}
           onChange={(id) => {
             setChallengerId(id);
             resetBattle();
           }}
         />
-        <div className="flex items-center justify-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full border border-amber-300/40 bg-red-950 text-xl font-black text-amber-100 shadow-xl shadow-black/40">
-            VS
-          </div>
-        </div>
-        <FighterPanel
+        <SelectFighter
           label="対戦相手"
-          character={opponent}
-          selectedId={opponentId}
+          value={opponentId}
           blockedId={challengerId}
           onChange={(id) => {
             setOpponentId(id);
@@ -308,61 +337,92 @@ export function BattleArena() {
         />
       </div>
 
-      <div className="fantasy-panel mt-5 p-4 sm:p-5">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-xs font-black tracking-[0.18em] text-red-300">
-              {phaseLabels[phase]}
-            </p>
-            <p className="mt-1 text-sm text-zinc-400">
-              ステータス合計 {statTotal(challenger)} vs {statTotal(opponent)}
-            </p>
-          </div>
+      <div
+        className={`relative overflow-hidden rounded-lg border border-amber-300/25 bg-gradient-to-br ${phaseStyles[phase]} p-3 shadow-2xl shadow-black/60 sm:p-6`}
+      >
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_12%,rgba(251,191,36,0.16),transparent_26%),linear-gradient(rgba(251,191,36,0.045)_1px,transparent_1px),linear-gradient(90deg,rgba(251,191,36,0.035)_1px,transparent_1px)] bg-[size:auto,28px_28px,28px_28px]" />
+        <div className="absolute bottom-0 left-1/2 h-44 w-[120%] -translate-x-1/2 rounded-[50%] bg-black/45 blur-2xl" />
 
-          {phase === "ready" ? (
-            <button
-              type="button"
-              onClick={startBattle}
-              className="fantasy-button fantasy-button-gold"
-            >
-              バトル開始
-            </button>
-          ) : null}
-          {phase === "opening" ? (
-            <button
-              type="button"
-              onClick={() => setPhase("middle")}
-              className="fantasy-button fantasy-button-red"
-            >
-              中間演出を見る
-            </button>
-          ) : null}
-          {phase === "middle" ? (
-            <button
-              type="button"
-              onClick={() => setPhase("result")}
-              className="fantasy-button fantasy-button-gold"
-            >
-              決着を見る
-            </button>
-          ) : null}
-          {phase === "result" ? (
-            <button
-              type="button"
-              onClick={startBattle}
-              className="fantasy-button fantasy-button-purple"
-            >
-              もう一度バトル
-            </button>
-          ) : null}
+        <PhaseBanner phase={phase} result={result} />
+
+        <div className="relative z-10 grid grid-cols-[minmax(0,1fr)_3.5rem_minmax(0,1fr)] items-end gap-2 sm:grid-cols-[1fr_auto_1fr] sm:gap-4">
+          <BattleFighter
+            character={challenger}
+            phase={phase}
+            result={result}
+            side="left"
+          />
+          <div className="flex items-center justify-center pb-24">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full border border-amber-300/45 bg-red-950/90 text-lg font-black text-amber-100 shadow-xl shadow-black/60 sm:h-16 sm:w-16 sm:text-2xl">
+              VS
+            </div>
+          </div>
+          <BattleFighter
+            character={opponent}
+            phase={phase}
+            result={result}
+            side="right"
+          />
         </div>
 
-        <BattleLog
-          phase={phase}
-          result={result}
-          challenger={challenger}
-          opponent={opponent}
-        />
+        <div className="relative z-10 mt-5 grid gap-3 sm:grid-cols-2">
+          <ScoreMini label={challenger.name} score={challengerScore} />
+          <ScoreMini label={opponent.name} score={opponentScore} />
+        </div>
+      </div>
+
+      <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs font-black tracking-[0.18em] text-red-300">
+            {phaseLabels[phase]}
+          </p>
+          <p className="mt-1 text-sm font-bold text-zinc-400">
+            {phase === "ready"
+              ? "モンスターを選んで開始しよう"
+              : phase === "opening"
+                ? "次は必殺技のぶつかり合い"
+                : phase === "middle"
+                  ? "HPが削られ、決着が近い"
+                  : "勝者が決定！"}
+          </p>
+        </div>
+
+        {phase === "ready" ? (
+          <button
+            type="button"
+            onClick={startBattle}
+            className="fantasy-button fantasy-button-gold"
+          >
+            バトル開始
+          </button>
+        ) : null}
+        {phase === "opening" ? (
+          <button
+            type="button"
+            onClick={() => setPhase("middle")}
+            className="fantasy-button fantasy-button-red"
+          >
+            中間演出を見る
+          </button>
+        ) : null}
+        {phase === "middle" ? (
+          <button
+            type="button"
+            onClick={() => setPhase("result")}
+            className="fantasy-button fantasy-button-gold"
+          >
+            決着を見る
+          </button>
+        ) : null}
+        {phase === "result" ? (
+          <button
+            type="button"
+            onClick={startBattle}
+            className="fantasy-button fantasy-button-purple"
+          >
+            もう一度バトル
+          </button>
+        ) : null}
       </div>
     </div>
   );
