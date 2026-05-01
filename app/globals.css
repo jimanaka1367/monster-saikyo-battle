@@ -1,26 +1,71 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #030303;
+  --foreground: #f8f4e8;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-sans: Arial, Helvetica, sans-serif;
+  --font-mono: "Courier New", Courier, monospace;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  text-rendering: optimizeLegibility;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@layer base {
+  body {
+    background:
+      radial-gradient(circle at 12% 8%, rgba(127, 29, 29, 0.28), transparent 28rem),
+      radial-gradient(circle at 88% 20%, rgba(88, 28, 135, 0.25), transparent 26rem),
+      linear-gradient(145deg, #020202 0%, #130507 44%, #06030a 100%);
+  }
+}
+
+@layer components {
+  .fantasy-section {
+    @apply px-4 py-10 sm:px-6 sm:py-14;
+  }
+
+  .fantasy-panel {
+    @apply rounded-lg border border-amber-300/20 bg-zinc-950/85 shadow-2xl shadow-black/50 ring-1 ring-white/5;
+  }
+
+  .fantasy-card {
+    @apply rounded-lg border border-amber-400/25 bg-zinc-950/90 shadow-2xl shadow-black/50 ring-1 ring-white/5;
+  }
+
+  .fantasy-button {
+    @apply flex min-h-14 items-center justify-center rounded-lg px-5 py-3 text-base font-black shadow-xl transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2;
+  }
+
+  .fantasy-button-gold {
+    @apply border border-amber-100/50 bg-amber-300 text-black shadow-amber-950/50 hover:bg-amber-200 focus-visible:outline-amber-200;
+  }
+
+  .fantasy-button-red {
+    @apply border border-red-300/40 bg-red-950/85 text-red-50 shadow-black/40 hover:bg-red-900 focus-visible:outline-red-200;
+  }
+
+  .fantasy-button-purple {
+    @apply border border-purple-300/40 bg-purple-950/85 text-purple-50 shadow-black/40 hover:bg-purple-900 focus-visible:outline-purple-200;
+  }
+
+  .fantasy-kicker {
+    @apply text-xs font-black tracking-[0.22em] text-amber-200;
+  }
+
+  .fantasy-badge {
+    @apply rounded-md border px-2 py-1 text-xs font-bold;
+  }
 }
