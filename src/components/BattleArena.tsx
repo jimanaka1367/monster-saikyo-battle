@@ -1,13 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { characters } from "@/src/data/characters";
+import { characters, getDangerLevelStars } from "@/src/data/characters";
 import type { MonsterCharacter } from "@/src/data/characters";
 import { MonsterArtwork } from "@/src/components/MonsterArtwork";
 import { createBattleResult } from "@/src/lib/battle";
 import type { BattleResult, BattleScore } from "@/src/lib/battle";
 
 type BattlePhase = "ready" | "opening" | "middle" | "result";
+type SelectionRole = "challenger" | "opponent";
 
 const phaseLabels: Record<BattlePhase, string> = {
   ready: "対戦準備",
@@ -63,36 +64,232 @@ const getHpPercent = (
   return result.winner.id === character.id ? 86 : 8;
 };
 
-function SelectFighter({
-  label,
-  value,
-  blockedId,
-  onChange,
+function SelectedFighterPanel({
+  character,
+  role,
+  isActive,
+  onSelectRole,
 }: {
-  label: string;
-  value: string;
-  blockedId: string;
-  onChange: (id: string) => void;
+  character: MonsterCharacter;
+  role: SelectionRole;
+  isActive: boolean;
+  onSelectRole: (role: SelectionRole) => void;
+}) {
+  const label = role === "challenger" ? "挑戦者" : "対戦相手";
+
+  return (
+    <button
+      type="button"
+      onClick={() => onSelectRole(role)}
+      className={`group relative min-h-36 overflow-hidden rounded-lg border p-3 text-left shadow-xl transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200 ${
+        isActive
+          ? "border-amber-200 bg-amber-300/15 shadow-[0_0_28px_rgba(251,191,36,0.24)]"
+          : "border-amber-300/20 bg-black/45 shadow-black/40 hover:border-amber-300/45"
+      }`}
+    >
+      <div
+        className={`absolute inset-0 bg-gradient-to-br ${character.themeColor} opacity-50`}
+      />
+      <div className="absolute inset-y-0 right-0 w-2/5">
+        <MonsterArtwork
+          character={character}
+          imageClassName="object-cover object-[50%_24%] opacity-90"
+          priority={isActive}
+          sizes="(max-width: 768px) 45vw, 18vw"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/35 to-transparent" />
+      </div>
+      <div className="relative z-10 flex min-h-28 flex-col justify-between">
+        <div>
+          <span className="inline-flex rounded-md border border-amber-200/40 bg-black/55 px-2 py-1 text-xs font-black tracking-[0.16em] text-amber-100">
+            {label}
+          </span>
+          <h3 className="mt-3 text-2xl font-black leading-tight text-zinc-50">
+            {character.name}
+          </h3>
+          <p className="mt-1 text-xs font-bold text-amber-200/85">
+            {character.category}
+          </p>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {character.elements.map((element) => (
+            <span
+              key={element}
+              className="fantasy-badge border-purple-300/25 bg-purple-950/80 text-purple-100"
+            >
+              {element}
+            </span>
+          ))}
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function CharacterSelectCard({
+  character,
+  selectedRole,
+  activeRole,
+  onChoose,
+}: {
+  character: MonsterCharacter;
+  selectedRole: SelectionRole | null;
+  activeRole: SelectionRole;
+  onChoose: (character: MonsterCharacter) => void;
+}) {
+  const isSelected = selectedRole !== null;
+  const selectedLabel = selectedRole === "challenger" ? "挑戦者" : "対戦相手";
+  const nextLabel = activeRole === "challenger" ? "挑戦者にする" : "対戦相手にする";
+
+  return (
+    <button
+      type="button"
+      onClick={() => onChoose(character)}
+      aria-pressed={isSelected}
+      className={`group relative min-h-64 overflow-hidden rounded-lg border text-left shadow-xl transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200 ${
+        isSelected
+          ? "border-amber-200 bg-amber-300/10 shadow-[0_0_30px_rgba(251,191,36,0.26)] ring-1 ring-amber-200/45"
+          : "border-white/10 bg-zinc-950/85 shadow-black/50 hover:-translate-y-0.5 hover:border-amber-300/45 hover:bg-zinc-900"
+      }`}
+    >
+      <div
+        className={`relative h-40 overflow-hidden bg-gradient-to-br ${character.themeColor}`}
+      >
+        <MonsterArtwork
+          character={character}
+          imageClassName="object-cover object-[50%_24%] transition duration-500 group-hover:scale-105"
+          priority={isSelected}
+          sizes="(max-width: 768px) 50vw, 20vw"
+        />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(251,191,36,0.18),transparent_36%),linear-gradient(to_top,rgba(0,0,0,0.82),transparent_66%)]" />
+        {isSelected ? (
+          <div className="absolute inset-2 rounded-md border border-amber-100/60 shadow-[inset_0_0_22px_rgba(251,191,36,0.24)]" />
+        ) : null}
+        <div className="absolute left-3 top-3 flex flex-wrap gap-2">
+          {isSelected ? (
+            <span className="rounded-md border border-amber-100/60 bg-amber-300 px-2 py-1 text-xs font-black text-black shadow-lg shadow-black/40">
+              {selectedLabel}
+            </span>
+          ) : (
+            <span className="rounded-md border border-amber-200/25 bg-black/55 px-2 py-1 text-xs font-black text-amber-100 opacity-0 transition group-hover:opacity-100">
+              {nextLabel}
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="space-y-3 p-3">
+        <div>
+          <h4 className="text-base font-black leading-tight text-zinc-50">
+            {character.name}
+          </h4>
+          <p className="mt-1 text-xs font-black tracking-[0.12em] text-amber-200">
+            危険度 {getDangerLevelStars(character.dangerLevel)}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {character.elements.map((element) => (
+            <span
+              key={element}
+              className="fantasy-badge border-purple-300/25 bg-purple-950/80 text-purple-100"
+            >
+              {element}
+            </span>
+          ))}
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function FighterSelector({
+  challenger,
+  opponent,
+  activeRole,
+  onSelectRole,
+  onChooseCharacter,
+  onStartBattle,
+}: {
+  challenger: MonsterCharacter;
+  opponent: MonsterCharacter;
+  activeRole: SelectionRole;
+  onSelectRole: (role: SelectionRole) => void;
+  onChooseCharacter: (character: MonsterCharacter) => void;
+  onStartBattle: () => void;
 }) {
   return (
-    <label className="block">
-      <span className="fantasy-kicker">{label}</span>
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="mt-2 min-h-14 w-full rounded-lg border border-amber-300/25 bg-zinc-950 px-3 text-base font-black text-zinc-50 outline-none ring-1 ring-white/5 focus:border-amber-300"
+    <div className="fantasy-panel mb-5 overflow-hidden p-4 sm:p-5">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="fantasy-kicker">CHOOSE FIGHTERS</p>
+          <h3 className="mt-2 text-2xl font-black text-zinc-50">
+            画像をタップして2体を選ぼう
+          </h3>
+        </div>
+        <div className="grid grid-cols-2 gap-2 rounded-lg border border-white/10 bg-black/45 p-1">
+          {(["challenger", "opponent"] as SelectionRole[]).map((role) => (
+            <button
+              key={role}
+              type="button"
+              onClick={() => onSelectRole(role)}
+              className={`min-h-11 rounded-md px-3 text-sm font-black transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-200 ${
+                activeRole === role
+                  ? "bg-amber-300 text-black shadow-lg shadow-amber-950/40"
+                  : "text-zinc-300 hover:bg-white/10"
+              }`}
+            >
+              {role === "challenger" ? "挑戦者" : "対戦相手"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-[1fr_auto_1fr] md:items-stretch">
+        <SelectedFighterPanel
+          character={challenger}
+          role="challenger"
+          isActive={activeRole === "challenger"}
+          onSelectRole={onSelectRole}
+        />
+        <div className="flex items-center justify-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full border border-amber-300/45 bg-red-950/90 text-lg font-black text-amber-100 shadow-xl shadow-black/60">
+            VS
+          </div>
+        </div>
+        <SelectedFighterPanel
+          character={opponent}
+          role="opponent"
+          isActive={activeRole === "opponent"}
+          onSelectRole={onSelectRole}
+        />
+      </div>
+
+      <button
+        type="button"
+        onClick={onStartBattle}
+        className="fantasy-button fantasy-button-gold mt-4 w-full text-lg"
       >
+        この2体でバトル開始
+      </button>
+
+      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {characters.map((character) => (
-          <option
+          <CharacterSelectCard
             key={character.id}
-            value={character.id}
-            disabled={character.id === blockedId}
-          >
-            {character.name}
-          </option>
+            character={character}
+            activeRole={activeRole}
+            selectedRole={
+              character.id === challenger.id
+                ? "challenger"
+                : character.id === opponent.id
+                  ? "opponent"
+                  : null
+            }
+            onChoose={onChooseCharacter}
+          />
         ))}
-      </select>
-    </label>
+      </div>
+    </div>
   );
 }
 
@@ -275,6 +472,7 @@ function ScoreMini({
 export function BattleArena() {
   const [challengerId, setChallengerId] = useState(characters[0].id);
   const [opponentId, setOpponentId] = useState(characters[1].id);
+  const [activeRole, setActiveRole] = useState<SelectionRole>("challenger");
   const [phase, setPhase] = useState<BattlePhase>("ready");
   const [result, setResult] = useState<BattleResult | null>(null);
 
@@ -301,6 +499,34 @@ export function BattleArena() {
     setResult(null);
   };
 
+  const chooseCharacter = (character: MonsterCharacter) => {
+    if (activeRole === "challenger") {
+      if (character.id === challengerId) {
+        return;
+      }
+
+      if (character.id === opponentId) {
+        setOpponentId(challengerId);
+      }
+
+      setChallengerId(character.id);
+      setActiveRole("opponent");
+    } else {
+      if (character.id === opponentId) {
+        return;
+      }
+
+      if (character.id === challengerId) {
+        setChallengerId(opponentId);
+      }
+
+      setOpponentId(character.id);
+      setActiveRole("challenger");
+    }
+
+    resetBattle();
+  };
+
   const challengerScore = getScoreForCharacter(challenger, result);
   const opponentScore = getScoreForCharacter(opponent, result);
 
@@ -316,26 +542,14 @@ export function BattleArena() {
         </p>
       </div>
 
-      <div className="fantasy-panel mb-5 grid gap-4 p-4 sm:grid-cols-2 sm:p-5">
-        <SelectFighter
-          label="挑戦者"
-          value={challengerId}
-          blockedId={opponentId}
-          onChange={(id) => {
-            setChallengerId(id);
-            resetBattle();
-          }}
-        />
-        <SelectFighter
-          label="対戦相手"
-          value={opponentId}
-          blockedId={challengerId}
-          onChange={(id) => {
-            setOpponentId(id);
-            resetBattle();
-          }}
-        />
-      </div>
+      <FighterSelector
+        challenger={challenger}
+        opponent={opponent}
+        activeRole={activeRole}
+        onSelectRole={setActiveRole}
+        onChooseCharacter={chooseCharacter}
+        onStartBattle={startBattle}
+      />
 
       <div
         className={`relative overflow-hidden rounded-lg border border-amber-300/25 bg-gradient-to-br ${phaseStyles[phase]} p-3 shadow-2xl shadow-black/60 sm:p-6`}
