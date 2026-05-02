@@ -1,83 +1,73 @@
-# モンスター画像生成パイプライン
+# モンスター画像生成
 
-30体以上のモンスター画像を、手動保存や手動リネームなしで生成するための土台です。
+`data/monster-image-prompts.json` をもとに、通常画像と戦闘画像をバッチ生成するための仕組みです。
 
-## 管理ファイル
+## APIキー
 
-- `data/monster-image-prompts.json`
-  - `templates.normal`: 図鑑・選択画面向けの共通テンプレート
-  - `templates.battle`: バトル画面向けの共通テンプレート
-  - `monsters[]`: 各モンスターの `id`, `name`, `slug`, `normalPrompt`, `battlePrompt`
-- `scripts/generation-status.json`
-  - 生成・スキップ・失敗・ドライランの状態を記録します。
-  - 途中で止まっても、次回 `generate:missing` で再開しやすくするためのファイルです。
+`.env.local` を作成し、OpenAI APIキーを設定します。
 
-## 出力先
+```bash
+OPENAI_API_KEY=your_api_key_here
+IMAGE_MODEL=gpt-image-2
+```
 
-- 通常画像: `public/images/characters/{slug}.png`
-- 戦闘画像: `public/images/characters/battle/{slug}-battle.png`
+`.env.local` は `.gitignore` の `.env*` によりコミットされません。例は `.env.example` に置いています。
 
-例:
+## dry-run
+
+実際に画像生成せず、対象・保存先・最終プロンプトだけ確認します。
+
+```bash
+npm run generate:images -- --type normal --limit 1 --dry-run
+npm run generate:battle -- --limit 1 --dry-run
+```
+
+## 1枚だけ生成する
+
+通常画像を1枚だけ生成:
+
+```bash
+npm run generate:images -- --type normal --limit 1
+```
+
+戦闘画像を1枚だけ生成:
+
+```bash
+npm run generate:images -- --type battle --limit 1
+```
+
+特定モンスターだけ生成:
+
+```bash
+npm run generate:images -- --type battle --id black-dragon-valgald
+```
+
+## 全件生成
+
+全件生成の前に必ず dry-run で対象を確認してください。
+
+```bash
+npm run generate:images -- --type all --dry-run
+npm run generate:all
+```
+
+30体の場合、`--type all` は通常画像30枚と戦闘画像30枚の合計60タスクになります。API利用料金と生成時間に注意してください。
+
+## スキップと再生成
+
+出力先に画像が既に存在する場合はスキップします。
 
 ```text
-public/images/characters/black-dragon-valgald.png
-public/images/characters/battle/black-dragon-valgald-battle.png
+public/images/characters/{normalFile}
+public/images/characters/battle/{battleFile}
 ```
 
-## コマンド
+既存画像を作り直す場合は `--force` を付けます。
 
 ```bash
-npm run generate:normal
-npm run generate:battle
-npm run generate:all
-npm run generate:missing
+npm run generate:images -- --type normal --id black-dragon-valgald --force
 ```
 
-安全に確認する場合は `-- --dry-run` を付けます。
+## 生成状況
 
-```bash
-npm run generate:missing -- --dry-run
-npm run generate:all -- --dry-run --limit 4
-```
-
-既存ファイルがある場合は、デフォルトでスキップします。作り直す場合は `-- --force` を付けます。
-
-```bash
-npm run generate:battle -- --force
-```
-
-## 画像生成APIの接続
-
-現時点ではAPI接続部分は差し替え式です。環境変数 `MONSTER_IMAGE_GENERATOR_MODULE` に、`generateImage(input)` を export するモジュールを指定します。
-
-```bash
-MONSTER_IMAGE_GENERATOR_MODULE=scripts/providers/my-image-generator.ts npm run generate:missing
-```
-
-`generateImage` は以下の形の入力を受け取り、`outputPath` にPNGを書き出します。
-
-```ts
-export async function generateImage(input: {
-  id: string;
-  name: string;
-  slug: string;
-  mode: "normal" | "battle";
-  prompt: string;
-  outputPath: string;
-}) {
-  // ここで画像生成APIを呼び出し、input.outputPath に保存する
-}
-```
-
-APIキーやモデル名は、プロバイダーモジュール側で環境変数から読む想定です。
-
-## 再開の考え方
-
-通常は以下の流れで運用します。
-
-1. `data/monster-image-prompts.json` にキャラクターを追加する
-2. `npm run generate:missing -- --dry-run` で対象と保存先を確認する
-3. `MONSTER_IMAGE_GENERATOR_MODULE=... npm run generate:missing` を実行する
-4. 途中で失敗したら、原因を直してもう一度 `npm run generate:missing` を実行する
-
-既に存在する画像はスキップされるため、30体でも100体でも差分だけを生成できます。
+生成・スキップ・dry-run・失敗の状態は `scripts/generation-status.json` に記録します。途中で失敗しても、それまでの状態は残ります。

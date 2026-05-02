@@ -1,50 +1,47 @@
 import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 
-type ImageMode = "normal" | "battle";
-type RunMode = ImageMode | "all" | "missing";
+type ImageType = "normal" | "battle";
+type RequestedType = ImageType | "all";
 
 type PromptMonster = {
   id: string;
   name: string;
   slug: string;
+  normalFile: string;
+  battleFile: string;
   normalPrompt: string;
   battlePrompt: string;
 };
 
 type PromptData = {
   version: number;
-  templates: Record<ImageMode, string>;
+  description?: string;
+  commonTemplates: Record<ImageType, string>;
   monsters: PromptMonster[];
 };
 
-type StatusItem = {
-  status: "generated" | "skipped" | "failed" | "dry-run";
-  outputPath: string;
-  promptHash: string;
-  updatedAt: string;
-  message?: string;
-};
-
-type GenerationStatus = {
-  version: number;
+type TypeStatus = {
+  generated: boolean;
+  file: string;
   updatedAt: string | null;
-  items: Record<string, StatusItem>;
+  skipped?: boolean;
+  dryRun?: boolean;
+  promptHash?: string;
+  error?: string;
 };
 
-type GenerateImageInput = {
-  id: string;
-  name: string;
-  slug: string;
-  mode: ImageMode;
+type MonsterStatus = Partial<Record<ImageType, TypeStatus>>;
+type GenerationStatus = Record<string, MonsterStatus>;
+
+type GenerateTask = {
+  monster: PromptMonster;
+  type: ImageType;
   prompt: string;
-  outputPath: string;
-};
-
-type ImageGeneratorModule = {
-  generateImage: (input: GenerateImageInput) => Promise<void>;
+  absoluteOutputPath: string;
+  relativeOutputPath: string;
 };
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -60,28 +57,31 @@ const battleOutputDir = path.join(
   "battle",
 );
 
+const readValue = (args: string[], name: string) => {
+  const index = args.indexOf(name);
+  return index >= 0 ? args[index + 1] : undefined;
+};
+
 const parseArgs = () => {
   const args = process.argv.slice(2);
-  const readValue = (name: string) => {
-    const index = args.indexOf(name);
-    return index >= 0 ? args[index + 1] : undefined;
-  };
-
-  const mode = (readValue("--mode") ?? "missing") as RunMode;
-  const dryRun = args.includes("--dry-run");
-  const force = args.includes("--force");
-  const limitValue = readValue("--limit");
+  const requestedType = (readValue(args, "--type") ??
+    readValue(args, "--mode") ??
+    "all") as RequestedType;
+  const id = readValue(args, "--id");
+  const limitValue = readValue(args, "--limit");
   const limit = limitValue ? Number(limitValue) : undefined;
+  const force = args.includes("--force");
+  const dryRun = args.includes("--dry-run");
 
-  if (!["normal", "battle", "all", "missing"].includes(mode)) {
-    throw new Error(`Unsupported --mode "${mode}". Use normal, battle, all, or missing.`);
+  if (!["normal", "battle", "all"].includes(requestedType)) {
+    throw new Error('Unsupported --type. Use "normal", "battle", or "all".');
   }
 
   if (limit !== undefined && (!Number.isInteger(limit) || limit < 1)) {
     throw new Error("--limit must be a positive integer.");
   }
 
-  return { mode, dryRun, force, limit };
+  return { requestedType, id, limit, force, dryRun };
 };
 
 const readJson = async <T>(filePath: string): Promise<T> => {
@@ -92,29 +92,49 @@ const writeJson = async (filePath: string, value: unknown) => {
   await writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
 };
 
-const createPrompt = (
-  template: string,
-  characterPrompt: string,
-  monster: PromptMonster,
-): string => {
-  return template
-    .replace("{{characterPrompt}}", characterPrompt)
-    .replace("{{id}}", monster.id)
-    .replace("{{name}}", monster.name)
-    .replace("{{slug}}", monster.slug);
-};
+const loadEnvFile = async (fileName: string) => {
+  const filePath = path.join(repoRoot, fileName);
 
-const outputPathFor = (slug: string, mode: ImageMode): string => {
-  if (mode === "battle") {
-    return path.join(battleOutputDir, `${slug}-battle.png`);
+  if (!existsSync(filePath)) {
+    return;
   }
 
-  return path.join(normalOutputDir, `${slug}.png`);
+  const content = await readFile(filePath, "utf8");
+
+  for (const line of content.split(/\r?\n/)) {
+    const trimmed = line.trim();
+
+    if (!trimmed || trimmed.startsWith("#")) {
+      continue;
+    }
+
+    const separator = trimmed.indexOf("=");
+
+    if (separator === -1) {
+      continue;
+    }
+
+    const key = trimmed.slice(0, separator).trim();
+    const rawValue = trimmed.slice(separator + 1).trim();
+    const value = rawValue.replace(/^["']|["']$/g, "");
+
+    if (key && process.env[key] === undefined) {
+      process.env[key] = value;
+    }
+  }
 };
 
-const statusKeyFor = (id: string, mode: ImageMode) => `${id}:${mode}`;
+const loadLocalEnv = async () => {
+  await loadEnvFile(".env.local");
+  await loadEnvFile(".env");
+};
 
-const hashPrompt = (prompt: string): string => {
+export const buildPrompt = (
+  template: string,
+  characterPrompt: string,
+): string => `${template}\n\n${characterPrompt}`;
+
+const promptHash = (prompt: string): string => {
   let hash = 0;
 
   for (let index = 0; index < prompt.length; index += 1) {
@@ -124,145 +144,243 @@ const hashPrompt = (prompt: string): string => {
   return hash.toString(16).padStart(8, "0");
 };
 
+const normalizeRelativePath = (filePath: string): string =>
+  path.relative(repoRoot, filePath).replaceAll(path.sep, "/");
+
+const outputPathFor = (monster: PromptMonster, type: ImageType) => {
+  const absoluteOutputPath =
+    type === "normal"
+      ? path.join(normalOutputDir, monster.normalFile)
+      : path.join(battleOutputDir, monster.battleFile);
+
+  return {
+    absoluteOutputPath,
+    relativeOutputPath: normalizeRelativePath(absoluteOutputPath),
+  };
+};
+
+const imageTypesFor = (requestedType: RequestedType): ImageType[] =>
+  requestedType === "all" ? ["normal", "battle"] : [requestedType];
+
 const loadStatus = async (): Promise<GenerationStatus> => {
   if (!existsSync(statusPath)) {
-    return { version: 1, updatedAt: null, items: {} };
+    return {};
   }
 
-  return readJson<GenerationStatus>(statusPath);
+  const parsed = await readJson<unknown>(statusPath);
+
+  if (
+    parsed &&
+    typeof parsed === "object" &&
+    "items" in parsed &&
+    (parsed as { items?: unknown }).items
+  ) {
+    return {};
+  }
+
+  return parsed as GenerationStatus;
 };
 
-const loadGenerator = async (): Promise<ImageGeneratorModule> => {
-  const modulePath = process.env.MONSTER_IMAGE_GENERATOR_MODULE;
+export const updateStatus = async (
+  status: GenerationStatus,
+  task: GenerateTask,
+  nextStatus: Omit<TypeStatus, "file">,
+) => {
+  status[task.monster.id] ??= {};
+  status[task.monster.id][task.type] = {
+    ...nextStatus,
+    file: task.relativeOutputPath,
+  };
+  await writeJson(statusPath, status);
+};
 
-  if (!modulePath) {
+export const saveImage = async (
+  outputPath: string,
+  image: { b64Json?: string; url?: string },
+) => {
+  await mkdir(path.dirname(outputPath), { recursive: true });
+
+  if (image.b64Json) {
+    await writeFile(outputPath, Buffer.from(image.b64Json, "base64"));
+    return;
+  }
+
+  if (image.url) {
+    const response = await fetch(image.url);
+
+    if (!response.ok) {
+      throw new Error(`Failed to download image URL: ${response.status}`);
+    }
+
+    await writeFile(outputPath, Buffer.from(await response.arrayBuffer()));
+    return;
+  }
+
+  throw new Error("Image API response did not include b64_json or url.");
+};
+
+export const generateImage = async (task: GenerateTask) => {
+  const apiKey = process.env.OPENAI_API_KEY;
+  const model = process.env.IMAGE_MODEL ?? "gpt-image-2";
+  const apiUrl =
+    process.env.OPENAI_IMAGE_API_URL ??
+    "https://api.openai.com/v1/images/generations";
+
+  if (!apiKey) {
     throw new Error(
-      "MONSTER_IMAGE_GENERATOR_MODULE is not set. Run with --dry-run, or set it to a module exporting generateImage(input).",
+      "OPENAI_API_KEY is not set. Add it to .env.local or export it before running without --dry-run.",
     );
   }
 
-  const resolvedPath = path.isAbsolute(modulePath)
-    ? modulePath
-    : path.join(repoRoot, modulePath);
-  const moduleUrl = pathToFileURL(resolvedPath).href;
-  const loaded = (await import(moduleUrl)) as Partial<ImageGeneratorModule>;
+  const response = await fetch(apiUrl, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      prompt: task.prompt,
+      size: process.env.IMAGE_SIZE ?? "1024x1536",
+      response_format: "b64_json",
+    }),
+  });
 
-  if (typeof loaded.generateImage !== "function") {
+  const responseBody = (await response.json().catch(() => null)) as
+    | {
+        data?: Array<{ b64_json?: string; url?: string }>;
+        error?: { message?: string };
+      }
+    | null;
+
+  if (!response.ok) {
     throw new Error(
-      `Generator module must export generateImage(input). Module: ${resolvedPath}`,
+      responseBody?.error?.message ??
+        `Image API request failed with status ${response.status}.`,
     );
   }
 
-  return { generateImage: loaded.generateImage };
+  const image = responseBody?.data?.[0];
+
+  if (!image) {
+    throw new Error("Image API response did not include data[0].");
+  }
+
+  await saveImage(task.absoluteOutputPath, {
+    b64Json: image.b64_json,
+    url: image.url,
+  });
 };
 
-const modesForRun = (mode: RunMode): ImageMode[] =>
-  mode === "all" || mode === "missing" ? ["normal", "battle"] : [mode];
+const createTasks = (
+  promptData: PromptData,
+  requestedType: RequestedType,
+  id?: string,
+): GenerateTask[] => {
+  const selectedMonsters = id
+    ? promptData.monsters.filter((monster) => monster.id === id)
+    : promptData.monsters;
+
+  if (id && selectedMonsters.length === 0) {
+    throw new Error(`Monster id not found: ${id}`);
+  }
+
+  return selectedMonsters.flatMap((monster) =>
+    imageTypesFor(requestedType).map((type) => {
+      const characterPrompt =
+        type === "normal" ? monster.normalPrompt : monster.battlePrompt;
+      const { absoluteOutputPath, relativeOutputPath } = outputPathFor(
+        monster,
+        type,
+      );
+
+      return {
+        monster,
+        type,
+        prompt: buildPrompt(promptData.commonTemplates[type], characterPrompt),
+        absoluteOutputPath,
+        relativeOutputPath,
+      };
+    }),
+  );
+};
+
+const printDryRun = (task: GenerateTask, skipped: boolean) => {
+  console.log(
+    `[dry-run${skipped ? ":skip-existing" : ""}] ${task.monster.id} ${task.type}`,
+  );
+  console.log(`file: ${task.relativeOutputPath}`);
+  console.log(`prompt:\n${task.prompt}`);
+  console.log("---");
+};
 
 const main = async () => {
-  const { mode, dryRun, force, limit } = parseArgs();
+  await loadLocalEnv();
+
+  const { requestedType, id, limit, force, dryRun } = parseArgs();
   const promptData = await readJson<PromptData>(promptPath);
   const status = await loadStatus();
-  const generator = dryRun ? null : await loadGenerator();
-  const modes = modesForRun(mode);
-  let processed = 0;
+  const tasks = createTasks(promptData, requestedType, id).slice(0, limit);
+  let generated = 0;
+  let skipped = 0;
 
   await mkdir(normalOutputDir, { recursive: true });
   await mkdir(battleOutputDir, { recursive: true });
 
-  for (const monster of promptData.monsters) {
-    for (const imageMode of modes) {
-      if (limit !== undefined && processed >= limit) {
-        break;
-      }
+  for (const task of tasks) {
+    const now = new Date().toISOString();
+    const exists = existsSync(task.absoluteOutputPath);
+    const hash = promptHash(task.prompt);
 
-      const characterPrompt =
-        imageMode === "battle" ? monster.battlePrompt : monster.normalPrompt;
-      const prompt = createPrompt(
-        promptData.templates[imageMode],
-        characterPrompt,
-        monster,
-      );
-      const outputPath = outputPathFor(monster.slug, imageMode);
-      const promptHash = hashPrompt(prompt);
-      const statusKey = statusKeyFor(monster.id, imageMode);
-      const outputExists = existsSync(outputPath);
-      const statusMatches =
-        status.items[statusKey]?.status === "generated" &&
-        status.items[statusKey]?.promptHash === promptHash;
-      const shouldSkip =
-        !force &&
-        (outputExists || (mode === "missing" && statusMatches));
-
-      if (shouldSkip) {
-        status.items[statusKey] = {
-          status: "skipped",
-          outputPath,
-          promptHash,
-          updatedAt: new Date().toISOString(),
-          message: outputExists ? "Output file already exists." : "Status already generated.",
-        };
-        processed += 1;
-        console.log(`[skip] ${monster.id} ${imageMode}`);
-        continue;
-      }
-
-      if (dryRun) {
-        status.items[statusKey] = {
-          status: "dry-run",
-          outputPath,
-          promptHash,
-          updatedAt: new Date().toISOString(),
-          message: prompt,
-        };
-        processed += 1;
-        console.log(`[dry-run] ${monster.id} ${imageMode} -> ${outputPath}`);
-        continue;
-      }
-
-      if (!generator) {
-        throw new Error("Image generator is not available.");
-      }
-
-      try {
-        await generator.generateImage({
-          id: monster.id,
-          name: monster.name,
-          slug: monster.slug,
-          mode: imageMode,
-          prompt,
-          outputPath,
-        });
-        status.items[statusKey] = {
-          status: "generated",
-          outputPath,
-          promptHash,
-          updatedAt: new Date().toISOString(),
-        };
-        processed += 1;
-        console.log(`[generated] ${monster.id} ${imageMode}`);
-      } catch (error) {
-        status.items[statusKey] = {
-          status: "failed",
-          outputPath,
-          promptHash,
-          updatedAt: new Date().toISOString(),
-          message: error instanceof Error ? error.message : String(error),
-        };
-        status.updatedAt = new Date().toISOString();
-        await writeJson(statusPath, status);
-        throw error;
-      }
+    if (dryRun) {
+      printDryRun(task, exists && !force);
+      await updateStatus(status, task, {
+        generated: false,
+        skipped: exists && !force,
+        dryRun: true,
+        updatedAt: now,
+        promptHash: hash,
+      });
+      continue;
     }
 
-    if (limit !== undefined && processed >= limit) {
-      break;
+    if (exists && !force) {
+      skipped += 1;
+      console.log(`[skip] ${task.monster.id} ${task.type}: ${task.relativeOutputPath}`);
+      await updateStatus(status, task, {
+        generated: true,
+        skipped: true,
+        updatedAt: now,
+        promptHash: hash,
+      });
+      continue;
+    }
+
+    try {
+      console.log(`[generate] ${task.monster.id} ${task.type}`);
+      await generateImage(task);
+      generated += 1;
+      await updateStatus(status, task, {
+        generated: true,
+        skipped: false,
+        updatedAt: new Date().toISOString(),
+        promptHash: hash,
+      });
+    } catch (error) {
+      await updateStatus(status, task, {
+        generated: false,
+        skipped: false,
+        updatedAt: new Date().toISOString(),
+        promptHash: hash,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
     }
   }
 
-  status.updatedAt = new Date().toISOString();
-  await writeJson(statusPath, status);
-  console.log(`Done. Processed ${processed} image task(s).`);
+  console.log(
+    `Done. tasks=${tasks.length}, generated=${generated}, skipped=${skipped}, dryRun=${dryRun}`,
+  );
 };
 
 main().catch((error) => {

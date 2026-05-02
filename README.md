@@ -79,19 +79,19 @@ npm run lint
 ドライラン:
 
 ```bash
-npm run generate:missing -- --dry-run
+npm run generate:images -- --type normal --limit 1 --dry-run
 ```
 
 通常画像のみ:
 
 ```bash
-npm run generate:normal
+npm run generate:normal -- --limit 1
 ```
 
 戦闘画像のみ:
 
 ```bash
-npm run generate:battle
+npm run generate:battle -- --limit 1
 ```
 
 詳しい使い方は `docs/image-generation.md` を参照してください。
