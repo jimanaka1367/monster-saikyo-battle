@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { characters, getDangerLevelStars } from "@/src/data/characters";
 import type { MonsterCharacter, MonsterElement } from "@/src/data/characters";
 import { MonsterArtwork } from "@/src/components/MonsterArtwork";
@@ -303,7 +303,7 @@ function FighterSelector({
   onStartBattle: () => void;
 }) {
   return (
-    <div className="fantasy-panel mb-5 overflow-hidden p-4 sm:p-5">
+    <div className="fantasy-panel mb-3 overflow-hidden p-4 sm:mb-5 sm:p-5">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="fantasy-kicker">CHOOSE FIGHTERS</p>
@@ -393,14 +393,14 @@ function HpBar({
   const hp = Math.max(0, Math.round(character.stats.hp * (percent / 100)));
 
   return (
-    <div className="rounded-lg border border-white/10 bg-black/65 p-2">
-      <div className="mb-1 flex items-center justify-between gap-2 text-xs font-black">
+    <div className="rounded-lg border border-white/10 bg-black/65 p-1.5 sm:p-2">
+      <div className="mb-1 flex items-center justify-between gap-2 text-[10px] font-black sm:text-xs">
         <span className="text-amber-100">HP</span>
         <span className="text-zinc-200">
           {hp} / {character.stats.hp}
         </span>
       </div>
-      <div className="h-5 overflow-hidden rounded-full bg-zinc-950 ring-1 ring-white/10">
+      <div className="h-3 overflow-hidden rounded-full bg-zinc-950 ring-1 ring-white/10 sm:h-5">
         <div
           className="h-full rounded-full bg-gradient-to-r from-red-700 via-amber-300 to-emerald-300 shadow-[0_0_18px_rgba(251,191,36,0.45)] transition-all duration-700"
           style={{ width: `${percent}%` }}
@@ -426,12 +426,12 @@ function ElementFieldEffect({
       }`}
     >
       <div
-        className={`absolute left-1/2 top-1/2 h-48 w-48 -translate-x-1/2 -translate-y-1/2 rounded-full ${effect.aura} blur-3xl ${
+        className={`absolute left-1/2 top-1/2 h-36 w-36 -translate-x-1/2 -translate-y-1/2 rounded-full ${effect.aura} blur-3xl sm:h-48 sm:w-48 ${
           active ? "animate-pulse" : ""
         }`}
       />
       <div
-        className={`absolute bottom-8 left-1/2 h-36 w-36 -translate-x-1/2 rounded-full border ${effect.ring}`}
+        className={`absolute bottom-4 left-1/2 h-24 w-24 -translate-x-1/2 rounded-full border sm:bottom-8 sm:h-36 sm:w-36 ${effect.ring}`}
       />
       {[0, 1, 2, 3, 4, 5].map((spark) => (
         <span
@@ -444,7 +444,7 @@ function ElementFieldEffect({
           }}
         />
       ))}
-      <span className="absolute bottom-4 right-4 rounded-md border border-white/15 bg-black/45 px-2 py-1 text-xs font-black text-zinc-100">
+      <span className="absolute bottom-2 right-2 rounded-md border border-white/15 bg-black/45 px-1.5 py-0.5 text-[10px] font-black text-zinc-100 sm:bottom-4 sm:right-4 sm:px-2 sm:py-1 sm:text-xs">
         {effect.glyph}
       </span>
     </div>
@@ -604,15 +604,15 @@ function BattleFighter({
                 : ""
       } transition-transform duration-700`}
     >
-      <div className="z-10 mb-2 w-full">
-        <p className="text-xs font-black text-zinc-400">{character.category}</p>
-        <h3 className="text-xl font-black leading-tight text-zinc-50 sm:text-2xl">
+      <div className="z-10 mb-1 w-full sm:mb-2">
+        <p className="text-[10px] font-black text-zinc-400 sm:text-xs">{character.category}</p>
+        <h3 className="text-sm font-black leading-tight text-zinc-50 sm:text-2xl">
           {character.name}
         </h3>
       </div>
 
       <div
-        className={`relative h-72 w-full overflow-hidden rounded-lg border bg-gradient-to-br ${character.themeColor} sm:h-[26rem] ${
+        className={`relative h-52 w-full overflow-hidden rounded-lg border bg-gradient-to-br ${character.themeColor} sm:h-[26rem] ${
           isWinner
             ? "border-amber-200/80 shadow-[0_0_44px_rgba(251,191,36,0.42)]"
             : isAttacking
@@ -655,7 +655,7 @@ function BattleFighter({
           </>
         ) : null}
         {isWinner ? (
-          <div className="absolute inset-x-4 top-4 rounded-full border border-amber-200/50 bg-amber-300/20 py-2 text-center text-xs font-black tracking-[0.18em] text-amber-100">
+          <div className="absolute inset-x-2 top-2 rounded-full border border-amber-200/50 bg-amber-300/20 py-1 text-center text-[10px] font-black tracking-[0.18em] text-amber-100 sm:inset-x-4 sm:top-4 sm:py-2 sm:text-xs">
             WINNER
           </div>
         ) : null}
@@ -664,7 +664,7 @@ function BattleFighter({
         ) : null}
       </div>
 
-      <div className="z-10 mt-2 w-full">
+      <div className="z-10 mt-1.5 w-full sm:mt-2">
         <HpBar character={character} percent={hpPercent} />
       </div>
     </div>
@@ -680,14 +680,14 @@ function PhaseBanner({
 }) {
   if (phase === "middle" && result) {
     return (
-      <div className="relative z-30 mt-4 rounded-lg border border-red-200/40 bg-black/75 p-3 text-center shadow-2xl shadow-red-950/70 sm:p-4">
+      <div className="relative z-30 mt-2 rounded-lg border border-red-200/40 bg-black/75 p-2 text-center shadow-2xl shadow-red-950/70 sm:mt-4 sm:p-4">
         <p className="text-xs font-black tracking-[0.22em] text-red-200">
           SPECIAL MOVE
         </p>
-        <p className="mt-1 bg-gradient-to-r from-amber-100 via-red-300 to-purple-200 bg-clip-text text-3xl font-black leading-tight text-transparent drop-shadow-2xl sm:text-6xl">
+        <p className="mt-0.5 bg-gradient-to-r from-amber-100 via-red-300 to-purple-200 bg-clip-text text-2xl font-black leading-tight text-transparent drop-shadow-2xl sm:mt-1 sm:text-6xl">
           {result.winner.specialMove.name}
         </p>
-        <p className="mt-2 text-sm font-bold text-zinc-200">
+        <p className="mt-1 hidden text-sm font-bold text-zinc-200 sm:block">
           {result.winner.name} の必殺技が闘技場を照らす！
         </p>
       </div>
@@ -696,14 +696,14 @@ function PhaseBanner({
 
   if (phase === "result" && result) {
     return (
-      <div className="relative z-30 mt-4 rounded-lg border border-amber-200/50 bg-black/78 p-4 text-center shadow-2xl shadow-amber-950/70 sm:p-5">
+      <div className="relative z-30 mt-2 rounded-lg border border-amber-200/50 bg-black/78 p-2.5 text-center shadow-2xl shadow-amber-950/70 sm:mt-4 sm:p-5">
         <p className="text-xs font-black tracking-[0.24em] text-amber-200">
           BATTLE WINNER
         </p>
-        <p className="mt-2 text-3xl font-black text-amber-100 sm:text-6xl">
+        <p className="mt-1 text-2xl font-black text-amber-100 sm:mt-2 sm:text-6xl">
           {result.winner.name}
         </p>
-        <p className="mt-3 text-sm font-bold leading-7 text-zinc-200">
+        <p className="mt-1 text-xs font-bold leading-5 text-zinc-200 sm:mt-3 sm:text-sm sm:leading-7">
           {result.victoryMessage}
         </p>
       </div>
@@ -712,11 +712,11 @@ function PhaseBanner({
 
   if (phase === "opening" && result) {
     return (
-      <div className="relative z-30 mt-4 rounded-lg border border-amber-200/30 bg-black/65 px-4 py-3 text-center shadow-xl shadow-black/60">
+      <div className="relative z-30 mt-2 rounded-lg border border-amber-200/30 bg-black/65 px-3 py-2 text-center shadow-xl shadow-black/60 sm:mt-4 sm:px-4 sm:py-3">
         <p className="text-xs font-black tracking-[0.22em] text-amber-200">
           SUMMON
         </p>
-        <p className="mt-1 text-xl font-black text-zinc-50">
+        <p className="mt-0.5 text-base font-black text-zinc-50 sm:mt-1 sm:text-xl">
           闇の闘技場に2体が現れた！
         </p>
       </div>
@@ -724,11 +724,11 @@ function PhaseBanner({
   }
 
   return (
-    <div className="relative z-30 mt-4 rounded-lg border border-amber-200/20 bg-black/55 px-4 py-3 text-center">
+    <div className="relative z-30 mt-2 rounded-lg border border-amber-200/20 bg-black/55 px-3 py-2 text-center sm:mt-4 sm:px-4 sm:py-3">
       <p className="text-xs font-black tracking-[0.22em] text-amber-200">
         READY
       </p>
-      <p className="mt-1 text-lg font-black text-zinc-50">
+      <p className="mt-0.5 text-base font-black text-zinc-50 sm:mt-1 sm:text-lg">
         モンスターを選んでバトル開始！
       </p>
     </div>
@@ -743,10 +743,10 @@ function ScoreMini({
   score: BattleScore | null;
 }) {
   return (
-    <div className="rounded-lg border border-white/10 bg-black/45 p-3 text-sm">
-      <p className="font-black text-zinc-50">{label}</p>
-      <p className="mt-1 text-xs font-bold text-zinc-400">バトルスコア</p>
-      <p className="text-2xl font-black text-amber-100">
+    <div className="rounded-lg border border-white/10 bg-black/45 p-2 text-xs sm:p-3 sm:text-sm">
+      <p className="truncate font-black text-zinc-50">{label}</p>
+      <p className="mt-0.5 text-[10px] font-bold text-zinc-400 sm:mt-1 sm:text-xs">バトルスコア</p>
+      <p className="text-xl font-black text-amber-100 sm:text-2xl">
         {score ? formatScore(score.total) : "---"}
       </p>
     </div>
@@ -754,6 +754,7 @@ function ScoreMini({
 }
 
 export function BattleArena() {
+  const battleStageRef = useRef<HTMLDivElement>(null);
   const [challengerId, setChallengerId] = useState(characters[0].id);
   const [opponentId, setOpponentId] = useState(characters[1].id);
   const [activeRole, setActiveRole] = useState<SelectionRole>("challenger");
@@ -774,8 +775,18 @@ export function BattleArena() {
   );
 
   const startBattle = () => {
+    if (challenger.id === opponent.id) {
+      return;
+    }
+
     setResult(createBattleResult(challenger, opponent));
     setPhase("opening");
+    window.requestAnimationFrame(() => {
+      battleStageRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
   };
 
   const resetBattle = () => {
@@ -816,12 +827,12 @@ export function BattleArena() {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <div className="mb-6">
+      <div className="mb-4 sm:mb-6">
         <p className="fantasy-kicker">BATTLE ARENA</p>
-        <h2 className="mt-2 text-3xl font-black text-zinc-50">
+        <h2 className="mt-2 text-2xl font-black text-zinc-50 sm:text-3xl">
           1対1ビジュアルバトル
         </h2>
-        <p className="mt-3 text-sm font-bold leading-7 text-zinc-300">
+        <p className="mt-2 text-sm font-bold leading-6 text-zinc-300 sm:mt-3 sm:leading-7">
           左右のモンスター、HPバー、必殺技で勝負の流れを見よう。
         </p>
       </div>
@@ -836,22 +847,23 @@ export function BattleArena() {
       />
 
       <div
-        className={`relative overflow-hidden rounded-lg border border-amber-300/25 bg-gradient-to-br ${phaseStyles[phase]} p-3 shadow-2xl shadow-black/60 sm:p-6`}
+        ref={battleStageRef}
+        className={`relative scroll-mt-2 overflow-hidden rounded-lg border border-amber-300/25 bg-gradient-to-br ${phaseStyles[phase]} p-2 shadow-2xl shadow-black/60 sm:scroll-mt-4 sm:p-6`}
       >
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_12%,rgba(251,191,36,0.16),transparent_26%),linear-gradient(rgba(251,191,36,0.045)_1px,transparent_1px),linear-gradient(90deg,rgba(251,191,36,0.035)_1px,transparent_1px)] bg-[size:auto,28px_28px,28px_28px]" />
         <PhaseSky phase={phase} result={result} />
         <div className="absolute bottom-0 left-1/2 h-44 w-[120%] -translate-x-1/2 rounded-[50%] bg-black/45 blur-2xl" />
         <ClashEffect result={result} phase={phase} />
 
-        <div className="relative z-10 grid grid-cols-[minmax(0,1fr)_3.5rem_minmax(0,1fr)] items-end gap-2 sm:grid-cols-[1fr_auto_1fr] sm:gap-4">
+        <div className="relative z-10 grid grid-cols-[minmax(0,1fr)_2.5rem_minmax(0,1fr)] items-end gap-2 sm:grid-cols-[1fr_auto_1fr] sm:gap-4">
           <BattleFighter
             character={challenger}
             phase={phase}
             result={result}
             side="left"
           />
-          <div className="flex items-center justify-center pb-24">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full border border-amber-300/45 bg-red-950/90 text-lg font-black text-amber-100 shadow-xl shadow-black/60 sm:h-16 sm:w-16 sm:text-2xl">
+          <div className="flex items-center justify-center pb-14 sm:pb-24">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-amber-300/45 bg-red-950/90 text-base font-black text-amber-100 shadow-xl shadow-black/60 sm:h-16 sm:w-16 sm:text-2xl">
               VS
             </div>
           </div>
@@ -863,7 +875,7 @@ export function BattleArena() {
           />
         </div>
 
-        <div className="relative z-10 mt-5 grid gap-3 sm:grid-cols-2">
+        <div className="relative z-10 mt-2 grid grid-cols-2 gap-2 sm:mt-5 sm:gap-3">
           <ScoreMini label={challenger.name} score={challengerScore} />
           <ScoreMini label={opponent.name} score={opponentScore} />
         </div>
@@ -871,12 +883,12 @@ export function BattleArena() {
         <PhaseBanner phase={phase} result={result} />
       </div>
 
-      <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-3 flex flex-col gap-2 sm:mt-5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
         <div>
           <p className="text-xs font-black tracking-[0.18em] text-red-300">
             {phaseLabels[phase]}
           </p>
-          <p className="mt-1 text-sm font-bold text-zinc-400">
+          <p className="mt-0.5 text-xs font-bold text-zinc-400 sm:mt-1 sm:text-sm">
             {phase === "ready"
               ? "モンスターを選んで開始しよう"
               : phase === "opening"
@@ -891,7 +903,7 @@ export function BattleArena() {
           <button
             type="button"
             onClick={startBattle}
-            className="fantasy-button fantasy-button-gold"
+            className="fantasy-button fantasy-button-gold min-h-11 py-2 text-sm sm:min-h-14 sm:py-3 sm:text-base"
           >
             バトル開始
           </button>
@@ -900,7 +912,7 @@ export function BattleArena() {
           <button
             type="button"
             onClick={() => setPhase("middle")}
-            className="fantasy-button fantasy-button-red"
+            className="fantasy-button fantasy-button-red min-h-11 py-2 text-sm sm:min-h-14 sm:py-3 sm:text-base"
           >
             中間演出を見る
           </button>
@@ -909,7 +921,7 @@ export function BattleArena() {
           <button
             type="button"
             onClick={() => setPhase("result")}
-            className="fantasy-button fantasy-button-gold"
+            className="fantasy-button fantasy-button-gold min-h-11 py-2 text-sm sm:min-h-14 sm:py-3 sm:text-base"
           >
             決着を見る
           </button>
@@ -918,7 +930,7 @@ export function BattleArena() {
           <button
             type="button"
             onClick={startBattle}
-            className="fantasy-button fantasy-button-purple"
+            className="fantasy-button fantasy-button-purple min-h-11 py-2 text-sm sm:min-h-14 sm:py-3 sm:text-base"
           >
             もう一度バトル
           </button>
