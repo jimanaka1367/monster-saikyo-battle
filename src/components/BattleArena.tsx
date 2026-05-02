@@ -467,7 +467,7 @@ function ClashEffect({
 
   if (pattern === "burst") {
     return (
-      <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden">
+      <div className="battle-impact pointer-events-none absolute inset-0 z-20 overflow-hidden">
         <div
           className={`absolute left-1/2 top-1/2 h-40 w-40 -translate-x-1/2 -translate-y-1/2 rounded-full border ${effect.ring} bg-black/25 animate-pulse`}
         />
@@ -483,7 +483,7 @@ function ClashEffect({
 
   if (pattern === "spiral") {
     return (
-      <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden">
+      <div className="battle-impact pointer-events-none absolute inset-0 z-20 overflow-hidden">
         <div
           className={`absolute left-1/2 top-[48%] h-44 w-44 -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-[42%] border ${effect.ring} bg-black/20`}
         />
@@ -498,7 +498,7 @@ function ClashEffect({
   }
 
   return (
-    <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden">
+    <div className="battle-impact pointer-events-none absolute inset-0 z-20 overflow-hidden">
       <div
         className={`absolute left-1/2 top-[45%] h-12 w-[92%] -translate-x-1/2 -translate-y-1/2 rotate-[-8deg] bg-gradient-to-r ${effect.beam} blur-sm animate-pulse`}
       />
@@ -570,6 +570,7 @@ function BattleFighter({
   const isAttacking = phase === "middle" && result?.winner.id === character.id;
   const isDefending = phase === "middle" && result?.loser.id === character.id;
   const isOpening = phase === "opening";
+  const artworkVariant = phase === "opening" || phase === "ready" ? "normal" : "battle";
   const alignClass = side === "left" ? "items-start text-left" : "items-end text-right";
   const effectPattern = result ? getBattleEffectPattern(result) : "rush";
   const attackMotion =
@@ -592,7 +593,15 @@ function BattleFighter({
   return (
     <div
       className={`relative flex min-w-0 flex-1 flex-col ${alignClass} ${
-        isWinner ? "scale-[1.08]" : isAttacking ? attackMotion : isDefending ? defenseMotion : ""
+        isWinner
+          ? "scale-[1.1]"
+          : isLoser
+            ? "scale-[0.9]"
+            : isAttacking
+              ? attackMotion
+              : isDefending
+                ? defenseMotion
+                : ""
       } transition-transform duration-700`}
     >
       <div className="z-10 mb-2 w-full">
@@ -610,7 +619,9 @@ function BattleFighter({
               ? "border-amber-100/70 shadow-[0_0_42px_rgba(251,191,36,0.32)]"
               : "border-amber-300/20 shadow-2xl shadow-black/50"
         } ${isLoser ? "opacity-65 grayscale-[0.35]" : ""} ${
-          isOpening || isDefending ? "animate-pulse" : ""
+          isWinner || isAttacking ? "battle-glow" : ""
+        } ${isDefending ? "battle-shake" : ""} ${
+          isOpening && !isWinner ? "animate-pulse" : ""
         }`}
       >
         <ElementFieldEffect
@@ -619,15 +630,19 @@ function BattleFighter({
         />
         <MonsterArtwork
           character={character}
-          imageVariant="battle"
+          imageVariant={artworkVariant}
           imageClassName={`object-cover object-[50%_24%] transition duration-700 ${
             isAttacking
               ? "scale-125 brightness-125 saturate-125"
               : isDefending
-                ? "scale-110 brightness-75 saturate-75"
+                ? "scale-105 brightness-75 saturate-75"
                 : isWinner
-                  ? "scale-[1.2] brightness-110"
-                  : "scale-[1.15]"
+                  ? "scale-[1.28] brightness-125 saturate-125"
+                  : isLoser
+                    ? "scale-100 brightness-60 saturate-75"
+                    : isOpening
+                      ? "scale-[1.08] brightness-105"
+                      : "scale-[1.15]"
           }`}
           priority
           sizes="(max-width: 768px) 48vw, 38vw"
@@ -635,8 +650,8 @@ function BattleFighter({
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(251,191,36,0.16),transparent_35%),linear-gradient(to_top,rgba(0,0,0,0.85),transparent_70%)]" />
         {isAttacking ? (
           <>
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(248,113,113,0.32),transparent_38%)]" />
-            <div className="absolute -left-10 top-1/2 h-8 w-[140%] -translate-y-1/2 rotate-12 bg-gradient-to-r from-transparent via-amber-200/45 to-transparent blur-sm" />
+            <div className="battle-flash absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(248,113,113,0.32),transparent_38%)]" />
+            <div className="battle-slash absolute -left-10 top-1/2 h-8 w-[140%] -translate-y-1/2 rotate-12 bg-gradient-to-r from-transparent via-amber-200/45 to-transparent blur-sm" />
           </>
         ) : null}
         {isWinner ? (

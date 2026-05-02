@@ -69,3 +69,90 @@ html {
     @apply rounded-md border px-2 py-1 text-xs font-bold;
   }
 }
+
+@layer utilities {
+  @keyframes battle-shake {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0) rotate(0deg);
+    }
+    25% {
+      transform: translate3d(-3px, 1px, 0) rotate(-0.5deg);
+    }
+    50% {
+      transform: translate3d(3px, -1px, 0) rotate(0.5deg);
+    }
+    75% {
+      transform: translate3d(-2px, 2px, 0) rotate(-0.25deg);
+    }
+  }
+
+  @keyframes battle-flash {
+    0%,
+    100% {
+      opacity: 0.22;
+    }
+    42% {
+      opacity: 0.62;
+    }
+    54% {
+      opacity: 0.12;
+    }
+  }
+
+  @keyframes battle-glow {
+    0%,
+    100% {
+      box-shadow: 0 0 24px rgba(251, 191, 36, 0.26), 0 18px 44px rgba(0, 0, 0, 0.52);
+    }
+    50% {
+      box-shadow: 0 0 52px rgba(251, 191, 36, 0.58), 0 20px 56px rgba(127, 29, 29, 0.38);
+    }
+  }
+
+  @keyframes battle-slash {
+    0% {
+      opacity: 0;
+      transform: translate3d(-16%, -50%, 0) rotate(12deg) scaleX(0.7);
+    }
+    45% {
+      opacity: 0.9;
+    }
+    100% {
+      opacity: 0;
+      transform: translate3d(16%, -50%, 0) rotate(12deg) scaleX(1.05);
+    }
+  }
+
+  @keyframes battle-impact {
+    0%,
+    100% {
+      filter: brightness(1);
+      transform: scale(1);
+    }
+    45% {
+      filter: brightness(1.35);
+      transform: scale(1.025);
+    }
+  }
+
+  .battle-shake {
+    animation: battle-shake 0.42s ease-in-out infinite;
+  }
+
+  .battle-flash {
+    animation: battle-flash 0.78s ease-in-out infinite;
+  }
+
+  .battle-glow {
+    animation: battle-glow 1.35s ease-in-out infinite;
+  }
+
+  .battle-slash {
+    animation: battle-slash 0.72s ease-in-out infinite;
+  }
+
+  .battle-impact {
+    animation: battle-impact 0.86s ease-in-out infinite;
+  }
+}
