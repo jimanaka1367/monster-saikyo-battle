@@ -1,11 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { MonsterCharacter, MonsterElement } from "@/src/data/characters";
 
 type MonsterArtworkProps = {
   character: MonsterCharacter;
+  imageVariant?: "normal" | "battle";
   imageClassName?: string;
   priority?: boolean;
   sizes?: string;
@@ -187,26 +188,44 @@ function FallbackMonsterVisual({ character }: { character: MonsterCharacter }) {
 
 export function MonsterArtwork({
   character,
+  imageVariant = "normal",
   imageClassName = "object-cover object-[50%_28%]",
   priority = false,
   sizes = "(max-width: 768px) 100vw, 50vw",
 }: MonsterArtworkProps) {
-  const [imageFailed, setImageFailed] = useState(false);
+  const [sourceIndex, setSourceIndex] = useState(0);
+  const imageSources = useMemo(() => {
+    const preferred =
+      imageVariant === "battle" ? character.battleImage : character.normalImage;
+    const sources = [
+      preferred,
+      character.normalImage,
+      character.image,
+    ].filter((source): source is string => Boolean(source));
 
-  if (imageFailed) {
+    return Array.from(new Set(sources));
+  }, [character.battleImage, character.image, character.normalImage, imageVariant]);
+
+  useEffect(() => {
+    setSourceIndex(0);
+  }, [character.id, imageVariant]);
+
+  const source = imageSources[sourceIndex];
+
+  if (!source) {
     return <FallbackMonsterVisual character={character} />;
   }
 
   return (
     <Image
-      src={character.image}
+      src={source}
       alt={character.name}
       fill
       sizes={sizes}
       className={imageClassName}
       loading={priority ? "eager" : "lazy"}
       fetchPriority={priority ? "high" : "auto"}
-      onError={() => setImageFailed(true)}
+      onError={() => setSourceIndex((index) => index + 1)}
     />
   );
 }

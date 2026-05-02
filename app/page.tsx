@@ -83,7 +83,7 @@ export default function Home() {
       </section>
 
       <section id="characters" className="fantasy-section bg-black">
-        <div className="mx-auto max-w-5xl">
+        <div className="mx-auto max-w-6xl">
           <div className="mb-6">
             <p className="fantasy-kicker text-red-300">
               MONSTER FILES
@@ -96,7 +96,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid gap-5 md:grid-cols-2">
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {characters.map((character, index) => (
               <CharacterCard
                 key={character.id}

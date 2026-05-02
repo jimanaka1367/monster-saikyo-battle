@@ -91,7 +91,7 @@ const createRound = (
 };
 
 const createTournament = (): TournamentState => {
-  const entrants = shuffleCharacters(characters);
+  const entrants = shuffleCharacters(characters).slice(0, 8);
   const quarterfinals = createRound("quarterfinal", entrants);
   const semifinalists = quarterfinals.map((match) => match.result.winner);
   const semifinals = createRound("semifinal", semifinalists);
@@ -152,6 +152,7 @@ function TournamentFighterPortrait({
     >
       <MonsterArtwork
         character={character}
+        imageVariant="battle"
         imageClassName={`object-cover object-[50%_24%] transition duration-700 ${
           isWinner ? "scale-[1.16] brightness-110" : "scale-105 brightness-75"
         }`}
@@ -328,6 +329,7 @@ export function TournamentBracket() {
               <div className="relative min-h-72 bg-black">
                 <MonsterArtwork
                   character={tournament.champion}
+                  imageVariant="battle"
                   imageClassName="scale-[1.14] object-cover object-[50%_24%] brightness-110"
                   priority={false}
                   sizes="(max-width: 768px) 100vw, 32vw"

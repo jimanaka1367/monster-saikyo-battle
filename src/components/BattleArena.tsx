@@ -9,6 +9,7 @@ import type { BattleResult, BattleScore } from "@/src/lib/battle";
 
 type BattlePhase = "ready" | "opening" | "middle" | "result";
 type SelectionRole = "challenger" | "opponent";
+type BattleEffectPattern = "rush" | "burst" | "spiral";
 
 const phaseLabels: Record<BattlePhase, string> = {
   ready: "対戦準備",
@@ -93,6 +94,22 @@ const elementEffects: Record<
 };
 
 const formatScore = (score: number): string => score.toFixed(1);
+
+const getBattleEffectPattern = (result: BattleResult): BattleEffectPattern => {
+  const seed = [
+    result.winner.id,
+    result.loser.id,
+    Math.round(result.challengerScore.total),
+    Math.round(result.opponentScore.total),
+  ].join("");
+  const value = Array.from(seed).reduce(
+    (total, character) => total + character.charCodeAt(0),
+    0,
+  );
+  const patterns: BattleEffectPattern[] = ["rush", "burst", "spiral"];
+
+  return patterns[value % patterns.length];
+};
 
 const getScoreForCharacter = (
   character: MonsterCharacter,
@@ -214,14 +231,14 @@ function CharacterSelectCard({
       type="button"
       onClick={() => onChoose(character)}
       aria-pressed={isSelected}
-      className={`group relative min-h-64 overflow-hidden rounded-lg border text-left shadow-xl transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200 ${
+      className={`group relative min-h-52 overflow-hidden rounded-lg border text-left shadow-xl transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200 sm:min-h-56 ${
         isSelected
           ? "border-amber-200 bg-amber-300/10 shadow-[0_0_30px_rgba(251,191,36,0.26)] ring-1 ring-amber-200/45"
           : "border-white/10 bg-zinc-950/85 shadow-black/50 hover:-translate-y-0.5 hover:border-amber-300/45 hover:bg-zinc-900"
       }`}
     >
       <div
-        className={`relative h-40 overflow-hidden bg-gradient-to-br ${character.themeColor}`}
+        className={`relative h-32 overflow-hidden bg-gradient-to-br ${character.themeColor} sm:h-36`}
       >
         <MonsterArtwork
           character={character}
@@ -293,6 +310,9 @@ function FighterSelector({
           <h3 className="mt-2 text-2xl font-black text-zinc-50">
             画像をタップして2体を選ぼう
           </h3>
+          <p className="mt-2 text-xs font-bold text-zinc-400">
+            登場モンスター {characters.length}体
+          </p>
         </div>
         <div className="grid grid-cols-2 gap-2 rounded-lg border border-white/10 bg-black/45 p-1">
           {(["challenger", "opponent"] as SelectionRole[]).map((role) => (
@@ -340,22 +360,24 @@ function FighterSelector({
         この2体でバトル開始
       </button>
 
-      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {characters.map((character) => (
-          <CharacterSelectCard
-            key={character.id}
-            character={character}
-            activeRole={activeRole}
-            selectedRole={
-              character.id === challenger.id
-                ? "challenger"
-                : character.id === opponent.id
-                  ? "opponent"
-                  : null
-            }
-            onChoose={onChooseCharacter}
-          />
-        ))}
+      <div className="mt-5 max-h-[38rem] overflow-y-auto pr-1">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          {characters.map((character) => (
+            <CharacterSelectCard
+              key={character.id}
+              character={character}
+              activeRole={activeRole}
+              selectedRole={
+                character.id === challenger.id
+                  ? "challenger"
+                  : character.id === opponent.id
+                    ? "opponent"
+                    : null
+              }
+              onChoose={onChooseCharacter}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -441,6 +463,39 @@ function ClashEffect({
   }
 
   const effect = elementEffects[result.winner.elements[0]];
+  const pattern = getBattleEffectPattern(result);
+
+  if (pattern === "burst") {
+    return (
+      <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden">
+        <div
+          className={`absolute left-1/2 top-1/2 h-40 w-40 -translate-x-1/2 -translate-y-1/2 rounded-full border ${effect.ring} bg-black/25 animate-pulse`}
+        />
+        <div
+          className={`absolute left-1/2 top-1/2 h-24 w-[78%] -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r ${effect.beam} opacity-75 blur-lg`}
+        />
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/20 bg-black/65 px-4 py-2 text-sm font-black text-amber-100 shadow-2xl shadow-black/70">
+          BURST
+        </div>
+      </div>
+    );
+  }
+
+  if (pattern === "spiral") {
+    return (
+      <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden">
+        <div
+          className={`absolute left-1/2 top-[48%] h-44 w-44 -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-[42%] border ${effect.ring} bg-black/20`}
+        />
+        <div
+          className={`absolute left-1/2 top-[48%] h-32 w-[86%] -translate-x-1/2 -translate-y-1/2 rotate-12 rounded-full bg-gradient-to-r ${effect.beam} opacity-70 blur-md`}
+        />
+        <div className="absolute left-1/2 top-[48%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/20 bg-black/65 px-4 py-2 text-sm font-black text-amber-100 shadow-2xl shadow-black/70">
+          SPIN
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden">
@@ -470,6 +525,7 @@ function PhaseSky({
 
   const activeCharacter = result?.winner;
   const effect = activeCharacter ? elementEffects[activeCharacter.elements[0]] : null;
+  const pattern = result ? getBattleEffectPattern(result) : "rush";
 
   return (
     <div className="pointer-events-none absolute inset-0">
@@ -479,7 +535,13 @@ function PhaseSky({
       {phase === "middle" && effect ? (
         <>
           <div
-            className={`absolute inset-x-[-10%] top-1/3 h-24 rotate-3 bg-gradient-to-r ${effect.beam} opacity-65 blur-md`}
+            className={`absolute inset-x-[-10%] ${
+              pattern === "burst"
+                ? "top-1/2 h-36 rotate-0"
+                : pattern === "spiral"
+                  ? "top-[42%] h-28 -rotate-6"
+                  : "top-1/3 h-24 rotate-3"
+            } bg-gradient-to-r ${effect.beam} opacity-65 blur-md`}
           />
           <div className="absolute inset-0 bg-black/10" />
         </>
@@ -509,14 +571,23 @@ function BattleFighter({
   const isDefending = phase === "middle" && result?.loser.id === character.id;
   const isOpening = phase === "opening";
   const alignClass = side === "left" ? "items-start text-left" : "items-end text-right";
+  const effectPattern = result ? getBattleEffectPattern(result) : "rush";
   const attackMotion =
-    side === "left"
-      ? "scale-[1.1] translate-x-2 sm:translate-x-6"
-      : "scale-[1.1] -translate-x-2 sm:-translate-x-6";
+    effectPattern === "burst"
+      ? "scale-[1.12] -translate-y-1"
+      : effectPattern === "spiral"
+        ? side === "left"
+          ? "scale-[1.08] translate-x-1 -rotate-1 sm:translate-x-4"
+          : "scale-[1.08] -translate-x-1 rotate-1 sm:-translate-x-4"
+        : side === "left"
+          ? "scale-[1.1] translate-x-2 sm:translate-x-6"
+          : "scale-[1.1] -translate-x-2 sm:-translate-x-6";
   const defenseMotion =
-    side === "left"
-      ? "scale-[0.97] -translate-x-1"
-      : "scale-[0.97] translate-x-1";
+    effectPattern === "burst"
+      ? "scale-[0.96] translate-y-1"
+      : side === "left"
+        ? "scale-[0.97] -translate-x-1"
+        : "scale-[0.97] translate-x-1";
 
   return (
     <div
@@ -548,6 +619,7 @@ function BattleFighter({
         />
         <MonsterArtwork
           character={character}
+          imageVariant="battle"
           imageClassName={`object-cover object-[50%_24%] transition duration-700 ${
             isAttacking
               ? "scale-125 brightness-125 saturate-125"
@@ -593,11 +665,11 @@ function PhaseBanner({
 }) {
   if (phase === "middle" && result) {
     return (
-      <div className="relative z-30 mb-4 rounded-lg border border-red-200/40 bg-black/75 p-4 text-center shadow-2xl shadow-red-950/70">
+      <div className="relative z-30 mt-4 rounded-lg border border-red-200/40 bg-black/75 p-3 text-center shadow-2xl shadow-red-950/70 sm:p-4">
         <p className="text-xs font-black tracking-[0.22em] text-red-200">
           SPECIAL MOVE
         </p>
-        <p className="mt-1 bg-gradient-to-r from-amber-100 via-red-300 to-purple-200 bg-clip-text text-4xl font-black leading-tight text-transparent drop-shadow-2xl sm:text-6xl">
+        <p className="mt-1 bg-gradient-to-r from-amber-100 via-red-300 to-purple-200 bg-clip-text text-3xl font-black leading-tight text-transparent drop-shadow-2xl sm:text-6xl">
           {result.winner.specialMove.name}
         </p>
         <p className="mt-2 text-sm font-bold text-zinc-200">
@@ -609,11 +681,11 @@ function PhaseBanner({
 
   if (phase === "result" && result) {
     return (
-      <div className="relative z-30 mb-4 rounded-lg border border-amber-200/50 bg-black/78 p-5 text-center shadow-2xl shadow-amber-950/70">
+      <div className="relative z-30 mt-4 rounded-lg border border-amber-200/50 bg-black/78 p-4 text-center shadow-2xl shadow-amber-950/70 sm:p-5">
         <p className="text-xs font-black tracking-[0.24em] text-amber-200">
           BATTLE WINNER
         </p>
-        <p className="mt-2 text-4xl font-black text-amber-100 sm:text-6xl">
+        <p className="mt-2 text-3xl font-black text-amber-100 sm:text-6xl">
           {result.winner.name}
         </p>
         <p className="mt-3 text-sm font-bold leading-7 text-zinc-200">
@@ -625,7 +697,7 @@ function PhaseBanner({
 
   if (phase === "opening" && result) {
     return (
-      <div className="relative z-30 mb-4 rounded-lg border border-amber-200/30 bg-black/65 px-4 py-3 text-center shadow-xl shadow-black/60">
+      <div className="relative z-30 mt-4 rounded-lg border border-amber-200/30 bg-black/65 px-4 py-3 text-center shadow-xl shadow-black/60">
         <p className="text-xs font-black tracking-[0.22em] text-amber-200">
           SUMMON
         </p>
@@ -637,7 +709,7 @@ function PhaseBanner({
   }
 
   return (
-    <div className="relative z-30 mb-4 rounded-lg border border-amber-200/20 bg-black/55 px-4 py-3 text-center">
+    <div className="relative z-30 mt-4 rounded-lg border border-amber-200/20 bg-black/55 px-4 py-3 text-center">
       <p className="text-xs font-black tracking-[0.22em] text-amber-200">
         READY
       </p>
@@ -756,8 +828,6 @@ export function BattleArena() {
         <div className="absolute bottom-0 left-1/2 h-44 w-[120%] -translate-x-1/2 rounded-[50%] bg-black/45 blur-2xl" />
         <ClashEffect result={result} phase={phase} />
 
-        <PhaseBanner phase={phase} result={result} />
-
         <div className="relative z-10 grid grid-cols-[minmax(0,1fr)_3.5rem_minmax(0,1fr)] items-end gap-2 sm:grid-cols-[1fr_auto_1fr] sm:gap-4">
           <BattleFighter
             character={challenger}
@@ -782,6 +852,8 @@ export function BattleArena() {
           <ScoreMini label={challenger.name} score={challengerScore} />
           <ScoreMini label={opponent.name} score={opponentScore} />
         </div>
+
+        <PhaseBanner phase={phase} result={result} />
       </div>
 
       <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
