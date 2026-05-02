@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { characters, getDangerLevelStars } from "@/src/data/characters";
-import type { MonsterCharacter } from "@/src/data/characters";
+import type { MonsterCharacter, MonsterElement } from "@/src/data/characters";
 import { MonsterArtwork } from "@/src/components/MonsterArtwork";
 import { createBattleResult } from "@/src/lib/battle";
 import type { BattleResult, BattleScore } from "@/src/lib/battle";
@@ -22,6 +22,74 @@ const phaseStyles: Record<BattlePhase, string> = {
   opening: "from-amber-950/40 via-black to-red-950/50",
   middle: "from-red-950/55 via-black to-purple-950/70",
   result: "from-amber-900/45 via-black to-purple-950/60",
+};
+
+const elementEffects: Record<
+  MonsterElement,
+  {
+    aura: string;
+    spark: string;
+    beam: string;
+    ring: string;
+    glyph: string;
+  }
+> = {
+  炎: {
+    aura: "bg-red-500/30",
+    spark: "bg-amber-200",
+    beam: "from-transparent via-red-400/70 to-amber-200/75",
+    ring: "border-red-300/55 shadow-[0_0_34px_rgba(248,113,113,0.42)]",
+    glyph: "火花",
+  },
+  雷: {
+    aura: "bg-sky-300/28",
+    spark: "bg-cyan-100",
+    beam: "from-transparent via-cyan-200/80 to-blue-300/75",
+    ring: "border-cyan-100/65 shadow-[0_0_36px_rgba(125,211,252,0.48)]",
+    glyph: "稲妻",
+  },
+  氷: {
+    aura: "bg-cyan-200/24",
+    spark: "bg-sky-100",
+    beam: "from-transparent via-cyan-100/75 to-slate-100/70",
+    ring: "border-cyan-100/60 shadow-[0_0_34px_rgba(165,243,252,0.42)]",
+    glyph: "氷片",
+  },
+  闇: {
+    aura: "bg-purple-700/32",
+    spark: "bg-fuchsia-300",
+    beam: "from-transparent via-purple-500/75 to-fuchsia-300/65",
+    ring: "border-purple-300/55 shadow-[0_0_36px_rgba(168,85,247,0.46)]",
+    glyph: "闇",
+  },
+  水: {
+    aura: "bg-blue-400/26",
+    spark: "bg-sky-200",
+    beam: "from-transparent via-blue-300/72 to-cyan-100/68",
+    ring: "border-sky-200/60 shadow-[0_0_34px_rgba(56,189,248,0.44)]",
+    glyph: "波",
+  },
+  毒: {
+    aura: "bg-emerald-400/24",
+    spark: "bg-lime-200",
+    beam: "from-transparent via-emerald-400/70 to-purple-300/68",
+    ring: "border-lime-200/55 shadow-[0_0_34px_rgba(74,222,128,0.4)]",
+    glyph: "霧",
+  },
+  地: {
+    aura: "bg-amber-700/24",
+    spark: "bg-stone-200",
+    beam: "from-transparent via-amber-700/70 to-stone-200/72",
+    ring: "border-amber-200/50 shadow-[0_0_32px_rgba(180,83,9,0.42)]",
+    glyph: "岩",
+  },
+  光: {
+    aura: "bg-yellow-200/28",
+    spark: "bg-yellow-100",
+    beam: "from-transparent via-yellow-100/82 to-amber-200/76",
+    ring: "border-yellow-100/70 shadow-[0_0_40px_rgba(253,224,71,0.54)]",
+    glyph: "光",
+  },
 };
 
 const formatScore = (score: number): string => score.toFixed(1);
@@ -320,6 +388,109 @@ function HpBar({
   );
 }
 
+function ElementFieldEffect({
+  character,
+  active,
+}: {
+  character: MonsterCharacter;
+  active: boolean;
+}) {
+  const effect = elementEffects[character.elements[0]];
+
+  return (
+    <div
+      className={`pointer-events-none absolute inset-0 overflow-hidden transition-opacity duration-500 ${
+        active ? "opacity-100" : "opacity-55"
+      }`}
+    >
+      <div
+        className={`absolute left-1/2 top-1/2 h-48 w-48 -translate-x-1/2 -translate-y-1/2 rounded-full ${effect.aura} blur-3xl ${
+          active ? "animate-pulse" : ""
+        }`}
+      />
+      <div
+        className={`absolute bottom-8 left-1/2 h-36 w-36 -translate-x-1/2 rounded-full border ${effect.ring}`}
+      />
+      {[0, 1, 2, 3, 4, 5].map((spark) => (
+        <span
+          key={spark}
+          className={`absolute h-2 w-2 rounded-full ${effect.spark} shadow-[0_0_14px_rgba(255,255,255,0.7)]`}
+          style={{
+            left: `${18 + spark * 13}%`,
+            top: `${18 + ((spark * 17) % 52)}%`,
+            opacity: active ? 0.85 : 0.45,
+          }}
+        />
+      ))}
+      <span className="absolute bottom-4 right-4 rounded-md border border-white/15 bg-black/45 px-2 py-1 text-xs font-black text-zinc-100">
+        {effect.glyph}
+      </span>
+    </div>
+  );
+}
+
+function ClashEffect({
+  result,
+  phase,
+}: {
+  result: BattleResult | null;
+  phase: BattlePhase;
+}) {
+  if (!result || phase !== "middle") {
+    return null;
+  }
+
+  const effect = elementEffects[result.winner.elements[0]];
+
+  return (
+    <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden">
+      <div
+        className={`absolute left-1/2 top-[45%] h-12 w-[92%] -translate-x-1/2 -translate-y-1/2 rotate-[-8deg] bg-gradient-to-r ${effect.beam} blur-sm animate-pulse`}
+      />
+      <div
+        className={`absolute left-1/2 top-[45%] h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full border ${effect.ring} bg-black/30`}
+      />
+      <div className="absolute left-1/2 top-[45%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/20 bg-black/60 px-4 py-2 text-sm font-black text-amber-100 shadow-2xl shadow-black/70">
+        HIT
+      </div>
+    </div>
+  );
+}
+
+function PhaseSky({
+  phase,
+  result,
+}: {
+  phase: BattlePhase;
+  result: BattleResult | null;
+}) {
+  if (phase === "ready") {
+    return null;
+  }
+
+  const activeCharacter = result?.winner;
+  const effect = activeCharacter ? elementEffects[activeCharacter.elements[0]] : null;
+
+  return (
+    <div className="pointer-events-none absolute inset-0">
+      {phase === "opening" ? (
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(251,191,36,0.24),transparent_28%),radial-gradient(circle_at_50%_92%,rgba(127,29,29,0.36),transparent_38%)] animate-pulse" />
+      ) : null}
+      {phase === "middle" && effect ? (
+        <>
+          <div
+            className={`absolute inset-x-[-10%] top-1/3 h-24 rotate-3 bg-gradient-to-r ${effect.beam} opacity-65 blur-md`}
+          />
+          <div className="absolute inset-0 bg-black/10" />
+        </>
+      ) : null}
+      {phase === "result" ? (
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(251,191,36,0.24),transparent_30%),linear-gradient(to_bottom,rgba(0,0,0,0.1),rgba(0,0,0,0.45))]" />
+      ) : null}
+    </div>
+  );
+}
+
 function BattleFighter({
   character,
   phase,
@@ -335,13 +506,22 @@ function BattleFighter({
   const isWinner = phase === "result" && result?.winner.id === character.id;
   const isLoser = phase === "result" && result?.loser.id === character.id;
   const isAttacking = phase === "middle" && result?.winner.id === character.id;
+  const isDefending = phase === "middle" && result?.loser.id === character.id;
   const isOpening = phase === "opening";
   const alignClass = side === "left" ? "items-start text-left" : "items-end text-right";
+  const attackMotion =
+    side === "left"
+      ? "scale-[1.1] translate-x-2 sm:translate-x-6"
+      : "scale-[1.1] -translate-x-2 sm:-translate-x-6";
+  const defenseMotion =
+    side === "left"
+      ? "scale-[0.97] -translate-x-1"
+      : "scale-[0.97] translate-x-1";
 
   return (
     <div
       className={`relative flex min-w-0 flex-1 flex-col ${alignClass} ${
-        isWinner ? "scale-[1.06]" : isAttacking ? "scale-[1.03]" : ""
+        isWinner ? "scale-[1.08]" : isAttacking ? attackMotion : isDefending ? defenseMotion : ""
       } transition-transform duration-700`}
     >
       <div className="z-10 mb-2 w-full">
@@ -352,17 +532,31 @@ function BattleFighter({
       </div>
 
       <div
-        className={`relative h-64 w-full overflow-hidden rounded-lg border bg-gradient-to-br ${character.themeColor} ${
+        className={`relative h-72 w-full overflow-hidden rounded-lg border bg-gradient-to-br ${character.themeColor} sm:h-[26rem] ${
           isWinner
-            ? "border-amber-200/70 shadow-[0_0_34px_rgba(251,191,36,0.35)]"
-            : "border-amber-300/20 shadow-2xl shadow-black/50"
-        } ${isLoser ? "opacity-70 grayscale-[0.25]" : ""} ${
-          isOpening ? "animate-pulse" : ""
+            ? "border-amber-200/80 shadow-[0_0_44px_rgba(251,191,36,0.42)]"
+            : isAttacking
+              ? "border-amber-100/70 shadow-[0_0_42px_rgba(251,191,36,0.32)]"
+              : "border-amber-300/20 shadow-2xl shadow-black/50"
+        } ${isLoser ? "opacity-65 grayscale-[0.35]" : ""} ${
+          isOpening || isDefending ? "animate-pulse" : ""
         }`}
       >
+        <ElementFieldEffect
+          character={character}
+          active={isOpening || isAttacking || isWinner}
+        />
         <MonsterArtwork
           character={character}
-          imageClassName="scale-110 object-cover object-[50%_24%]"
+          imageClassName={`object-cover object-[50%_24%] transition duration-700 ${
+            isAttacking
+              ? "scale-125 brightness-125 saturate-125"
+              : isDefending
+                ? "scale-110 brightness-75 saturate-75"
+                : isWinner
+                  ? "scale-[1.2] brightness-110"
+                  : "scale-[1.15]"
+          }`}
           priority
           sizes="(max-width: 768px) 48vw, 38vw"
         />
@@ -374,9 +568,12 @@ function BattleFighter({
           </>
         ) : null}
         {isWinner ? (
-          <div className="absolute inset-x-4 top-4 rounded-full border border-amber-200/35 bg-amber-300/15 py-2 text-center text-xs font-black tracking-[0.18em] text-amber-100">
+          <div className="absolute inset-x-4 top-4 rounded-full border border-amber-200/50 bg-amber-300/20 py-2 text-center text-xs font-black tracking-[0.18em] text-amber-100">
             WINNER
           </div>
+        ) : null}
+        {isDefending ? (
+          <div className="absolute inset-0 bg-black/28" />
         ) : null}
       </div>
 
@@ -396,7 +593,7 @@ function PhaseBanner({
 }) {
   if (phase === "middle" && result) {
     return (
-      <div className="relative z-20 mb-4 rounded-lg border border-red-200/40 bg-black/75 p-4 text-center shadow-2xl shadow-red-950/70">
+      <div className="relative z-30 mb-4 rounded-lg border border-red-200/40 bg-black/75 p-4 text-center shadow-2xl shadow-red-950/70">
         <p className="text-xs font-black tracking-[0.22em] text-red-200">
           SPECIAL MOVE
         </p>
@@ -412,7 +609,7 @@ function PhaseBanner({
 
   if (phase === "result" && result) {
     return (
-      <div className="relative z-20 mb-4 rounded-lg border border-amber-200/50 bg-black/78 p-5 text-center shadow-2xl shadow-amber-950/70">
+      <div className="relative z-30 mb-4 rounded-lg border border-amber-200/50 bg-black/78 p-5 text-center shadow-2xl shadow-amber-950/70">
         <p className="text-xs font-black tracking-[0.24em] text-amber-200">
           BATTLE WINNER
         </p>
@@ -428,7 +625,7 @@ function PhaseBanner({
 
   if (phase === "opening" && result) {
     return (
-      <div className="relative z-20 mb-4 rounded-lg border border-amber-200/30 bg-black/65 px-4 py-3 text-center shadow-xl shadow-black/60">
+      <div className="relative z-30 mb-4 rounded-lg border border-amber-200/30 bg-black/65 px-4 py-3 text-center shadow-xl shadow-black/60">
         <p className="text-xs font-black tracking-[0.22em] text-amber-200">
           SUMMON
         </p>
@@ -440,7 +637,7 @@ function PhaseBanner({
   }
 
   return (
-    <div className="relative z-20 mb-4 rounded-lg border border-amber-200/20 bg-black/55 px-4 py-3 text-center">
+    <div className="relative z-30 mb-4 rounded-lg border border-amber-200/20 bg-black/55 px-4 py-3 text-center">
       <p className="text-xs font-black tracking-[0.22em] text-amber-200">
         READY
       </p>
@@ -555,7 +752,9 @@ export function BattleArena() {
         className={`relative overflow-hidden rounded-lg border border-amber-300/25 bg-gradient-to-br ${phaseStyles[phase]} p-3 shadow-2xl shadow-black/60 sm:p-6`}
       >
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_12%,rgba(251,191,36,0.16),transparent_26%),linear-gradient(rgba(251,191,36,0.045)_1px,transparent_1px),linear-gradient(90deg,rgba(251,191,36,0.035)_1px,transparent_1px)] bg-[size:auto,28px_28px,28px_28px]" />
+        <PhaseSky phase={phase} result={result} />
         <div className="absolute bottom-0 left-1/2 h-44 w-[120%] -translate-x-1/2 rounded-[50%] bg-black/45 blur-2xl" />
+        <ClashEffect result={result} phase={phase} />
 
         <PhaseBanner phase={phase} result={result} />
 

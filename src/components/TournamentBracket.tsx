@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { characters } from "@/src/data/characters";
 import type { MonsterCharacter } from "@/src/data/characters";
+import { MonsterArtwork } from "@/src/components/MonsterArtwork";
 import { createBattleResult } from "@/src/lib/battle";
 import type { BattleResult } from "@/src/lib/battle";
 
@@ -31,6 +32,17 @@ const roundTitles: Record<TournamentRoundKey, string> = {
 };
 
 const formatScore = (score: number): string => score.toFixed(1);
+
+const elementGlow: Record<string, string> = {
+  炎: "from-red-500/60 via-amber-300/35 to-transparent",
+  雷: "from-cyan-200/65 via-blue-400/35 to-transparent",
+  氷: "from-cyan-100/60 via-sky-300/30 to-transparent",
+  闇: "from-purple-500/65 via-fuchsia-400/30 to-transparent",
+  水: "from-blue-300/60 via-cyan-200/30 to-transparent",
+  毒: "from-emerald-400/60 via-purple-400/30 to-transparent",
+  地: "from-amber-700/58 via-stone-300/28 to-transparent",
+  光: "from-yellow-100/70 via-amber-300/35 to-transparent",
+};
 
 const shuffleCharacters = (
   sourceCharacters: MonsterCharacter[],
@@ -117,6 +129,66 @@ function FighterLine({
   );
 }
 
+function TournamentFighterPortrait({
+  character,
+  isWinner,
+  side,
+}: {
+  character: MonsterCharacter;
+  isWinner: boolean;
+  side: "left" | "right";
+}) {
+  const glow =
+    elementGlow[character.elements[0]] ??
+    "from-amber-300/50 via-red-300/25 to-transparent";
+
+  return (
+    <div
+      className={`relative min-h-40 overflow-hidden rounded-lg border bg-gradient-to-br ${character.themeColor} ${
+        isWinner
+          ? "border-amber-200/70 shadow-[0_0_26px_rgba(251,191,36,0.28)]"
+          : "border-white/10 opacity-[0.72] grayscale-[0.25]"
+      }`}
+    >
+      <MonsterArtwork
+        character={character}
+        imageClassName={`object-cover object-[50%_24%] transition duration-700 ${
+          isWinner ? "scale-[1.16] brightness-110" : "scale-105 brightness-75"
+        }`}
+        priority={false}
+        sizes="(max-width: 768px) 45vw, 16vw"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
+      {isWinner ? (
+        <>
+          <div
+            className={`absolute ${
+              side === "left" ? "right-[-35%]" : "left-[-35%]"
+            } top-1/2 h-12 w-[120%] -translate-y-1/2 rotate-[-10deg] bg-gradient-to-r ${glow} blur-sm`}
+          />
+          <div className="absolute left-3 top-3 rounded-md border border-amber-100/60 bg-amber-300 px-2 py-1 text-xs font-black text-black">
+            WIN
+          </div>
+        </>
+      ) : (
+        <div className="absolute inset-0 bg-black/24" />
+      )}
+      <div
+        className={`absolute bottom-3 ${
+          side === "left" ? "left-3 text-left" : "right-3 text-right"
+        } max-w-[88%]`}
+      >
+        <p className="text-sm font-black leading-tight text-zinc-50">
+          {character.name}
+        </p>
+        <p className="mt-1 text-xs font-bold text-amber-100">
+          {character.elements.join("・")}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function MatchCard({ match }: { match: TournamentMatch }) {
   const scoreA =
     match.result.challenger.id === match.fighterA.id
@@ -126,22 +198,41 @@ function MatchCard({ match }: { match: TournamentMatch }) {
     match.result.challenger.id === match.fighterB.id
       ? match.result.challengerScore
       : match.result.opponentScore;
+  const fighterAWins = match.result.winner.id === match.fighterA.id;
+  const fighterBWins = match.result.winner.id === match.fighterB.id;
 
   return (
-    <article className="fantasy-card p-3">
+    <article className="fantasy-card overflow-hidden p-3">
       <p className="text-xs font-black tracking-[0.16em] text-red-300">
         {match.title}
       </p>
 
+      <div className="relative mt-3 grid grid-cols-[minmax(0,1fr)_2.6rem_minmax(0,1fr)] items-center gap-2">
+        <TournamentFighterPortrait
+          character={match.fighterA}
+          isWinner={fighterAWins}
+          side="left"
+        />
+        <div className="relative z-10 flex h-11 w-11 items-center justify-center rounded-full border border-amber-300/45 bg-red-950/90 text-xs font-black text-amber-100 shadow-xl shadow-black/60">
+          VS
+        </div>
+        <TournamentFighterPortrait
+          character={match.fighterB}
+          isWinner={fighterBWins}
+          side="right"
+        />
+        <div className="pointer-events-none absolute left-1/2 top-1/2 h-10 w-[82%] -translate-x-1/2 -translate-y-1/2 rotate-3 bg-gradient-to-r from-transparent via-amber-200/28 to-transparent blur-md" />
+      </div>
+
       <div className="mt-3 space-y-2">
         <FighterLine
           character={match.fighterA}
-          isWinner={match.result.winner.id === match.fighterA.id}
+          isWinner={fighterAWins}
         />
         <div className="text-center text-xs font-black text-zinc-500">VS</div>
         <FighterLine
           character={match.fighterB}
-          isWinner={match.result.winner.id === match.fighterB.id}
+          isWinner={fighterBWins}
         />
       </div>
 
@@ -233,7 +324,20 @@ export function TournamentBracket() {
           <div
             className={`rounded-lg bg-gradient-to-br ${tournament.champion.themeColor} p-px shadow-2xl shadow-black/50`}
           >
-            <div className="rounded-lg bg-black/75 p-5 text-center sm:p-7">
+            <div className="grid overflow-hidden rounded-lg bg-black/75 sm:grid-cols-[0.8fr_1.2fr]">
+              <div className="relative min-h-72 bg-black">
+                <MonsterArtwork
+                  character={tournament.champion}
+                  imageClassName="scale-[1.14] object-cover object-[50%_24%] brightness-110"
+                  priority={false}
+                  sizes="(max-width: 768px) 100vw, 32vw"
+                />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_28%,rgba(251,191,36,0.22),transparent_34%),linear-gradient(to_top,rgba(0,0,0,0.9),transparent_72%)]" />
+                <div className="absolute inset-x-5 top-5 rounded-full border border-amber-100/50 bg-amber-300/18 py-2 text-center text-xs font-black tracking-[0.22em] text-amber-100 shadow-2xl shadow-black/70">
+                  TOURNAMENT CHAMPION
+                </div>
+              </div>
+              <div className="p-5 text-center sm:p-7">
               <p className="fantasy-kicker">
                 CHAMPION
               </p>
@@ -255,6 +359,7 @@ export function TournamentBracket() {
                 <span className="rounded-md border border-amber-300/30 bg-amber-300 px-2 py-1 text-xs font-black text-black">
                   {tournament.champion.rarity}
                 </span>
+              </div>
               </div>
             </div>
           </div>
