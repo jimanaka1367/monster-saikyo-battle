@@ -68,6 +68,34 @@ Lint:
 npm run lint
 ```
 
+## モンスター画像生成
+
+画像生成のプロンプトとバッチ処理は以下で管理します。
+
+- `data/monster-image-prompts.json`
+- `scripts/generate-images.ts`
+- `scripts/generation-status.json`
+
+ドライラン:
+
+```bash
+npm run generate:missing -- --dry-run
+```
+
+通常画像のみ:
+
+```bash
+npm run generate:normal
+```
+
+戦闘画像のみ:
+
+```bash
+npm run generate:battle
+```
+
+詳しい使い方は `docs/image-generation.md` を参照してください。
+
 ## 補足
 
 このプロジェクトでは、ビルド時のTypeScript検証ワーカーを安定して動かすために `next.config.ts` で `experimental.workerThreads` を有効にしています。

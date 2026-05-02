@@ -1,0 +1,280 @@
+{
+  "version": 1,
+  "description": "モンスター最強決定バトル用の画像生成プロンプト管理データ。通常画像と戦闘画像をバッチ生成するために使用する。",
+  "commonTemplates": {
+    "normal": "子ども向けの「ダークファンタジー図鑑風」モンスターイラスト。小学生向けの怖かっこいい迫力。血しぶき、切断、内臓、過度なグロ表現は禁止。重厚でかっこいい雰囲気だが、ホラーすぎない。黒・赤・紫・金を基調にした高密度なファンタジーイラスト。モンスターが主役で、背景にも世界観がある。1体を大きく目立つ構図にする。スマホアプリのカード、図鑑画面、キャラクター選択画面で使いやすいように、縦長構図。文字、タイトル、説明文、UI、フレームは入れない。イラストのみ。",
+    "battle": "子ども向けの「ダークファンタジー図鑑風」モンスターの戦闘イラスト。小学生向けの怖かっこいい迫力。血しぶき、切断、内臓、過度なグロ表現は禁止。重厚でかっこいい雰囲気だが、ホラーすぎない。黒・赤・紫・金を基調にした高密度なファンタジーイラスト。モンスターが主役で、攻撃や必殺技を繰り出している場面を描く。スマホアプリのバトル画面で使いやすいように、縦長構図。躍動感、攻撃エフェクト、属性エフェクトを強める。文字、タイトル、説明文、UI、フレームは入れない。イラストのみ。"
+  },
+  "monsters": [
+    {
+      "id": "black-dragon-valgald",
+      "name": "黒竜ヴァルガルド",
+      "slug": "black-dragon-valgald",
+      "normalFile": "black-dragon-valgald.png",
+      "battleFile": "black-dragon-valgald-battle.png",
+      "normalPrompt": "巨大な古代の黒竜。黒い鱗、赤く光る目、鋭い角、大きく広がる翼。口元や胸元に黒炎のような赤い発光。背景は闇に包まれた火山地帯や崩れた古代城、赤い溶岩や煙が漂う世界。堂々とした王者のような立ち姿。最強ボス感を重視。",
+      "battlePrompt": "黒竜ヴァルガルドが巨大な翼を広げ、黒炎のブレスを正面に放つ戦闘シーン。火山の溶岩と闇のオーラが渦巻き、赤黒い炎が画面全体を照らしている。王者が必殺技を放つ迫力。"
+    },
+    {
+      "id": "thunder-emperor-wyvern",
+      "name": "雷帝ワイバーン",
+      "slug": "thunder-emperor-wyvern",
+      "normalFile": "thunder-emperor-wyvern.png",
+      "battleFile": "thunder-emperor-wyvern-battle.png",
+      "normalPrompt": "空を支配する高速の飛竜。青黒い鱗、鋭い翼、電気を帯びた爪と尾。体の周囲に青白い稲妻が走る。背景は雷雲に包まれた嵐の空、稲妻が落ちる山岳地帯。空中戦のスピード感を重視。",
+      "battlePrompt": "雷帝ワイバーンが青白い雷をまとって急降下し、鋭い爪で攻撃する瞬間。背景には雷雲と稲妻、空気を切り裂くスピード線。高速の空中戦を感じるダイナミックな構図。"
+    },
+    {
+      "id": "ice-fang-fenrir",
+      "name": "氷牙フェンリル",
+      "slug": "ice-fang-fenrir",
+      "normalFile": "ice-fang-fenrir.png",
+      "battleFile": "ice-fang-fenrir-battle.png",
+      "normalPrompt": "月夜に現れる巨大な氷の魔狼。黒みがかった濃紺の毛並み、氷の結晶のような輝き、鋭い牙と爪、青白く光る目。背景は雪と氷に包まれた森、月明かり、吹雪、凍った大地。",
+      "battlePrompt": "氷牙フェンリルが氷の爪を散らしながら飛びかかる戦闘シーン。足元から氷柱が伸び、冷気と吹雪が周囲を包む。俊敏な動きと鋭い牙が目立つ構図。"
+    },
+    {
+      "id": "underworld-cerberus",
+      "name": "冥界ケルベロス",
+      "slug": "underworld-cerberus",
+      "normalFile": "underworld-cerberus.png",
+      "battleFile": "underworld-cerberus-battle.png",
+      "normalPrompt": "冥界の門を守る三つ首の巨大な魔獣。黒い毛並み、赤く光る目、三つの頭がそれぞれ威嚇する表情。鋭い牙と爪、首輪や鎖を連想させる要素。背景は冥界の門、暗い神殿、赤黒い霧、不気味な炎。",
+      "battlePrompt": "冥界ケルベロスの三つの頭が一斉に闇の咆哮を放ち、前へ突進する戦闘シーン。赤黒い炎と冥界の霧が広がり、重戦車のような圧力を感じる構図。"
+    },
+    {
+      "id": "deep-sea-leviathan",
+      "name": "深海リヴァイアサン",
+      "slug": "deep-sea-leviathan",
+      "normalFile": "deep-sea-leviathan.png",
+      "battleFile": "deep-sea-leviathan-battle.png",
+      "normalPrompt": "深海に眠る巨大な海竜。青黒い巨大な体、海蛇のように長いシルエット、鋭い牙、怪しく光る目。海水や渦潮をまとい、背景は深海神殿、暗い海、水流、気泡、海底の遺跡。",
+      "battlePrompt": "深海リヴァイアサンが巨大な渦潮と大波を巻き上げながら襲いかかる戦闘シーン。深海の神殿が揺れ、水流と泡が画面全体を覆う。圧倒的な巨体と水属性の迫力。"
+    },
+    {
+      "id": "phoenix-of-rebirth",
+      "name": "不死鳥フェニクス",
+      "slug": "phoenix-of-rebirth",
+      "normalFile": "phoenix-of-rebirth.png",
+      "battleFile": "phoenix-of-rebirth-battle.png",
+      "normalPrompt": "炎の中からよみがえる伝説の神鳥。赤、金、橙を中心にした美しく神々しい巨大な鳥。翼を大きく広げ、炎と光をまとって輝く。背景は燃え上がる空、天空の祭壇、光に包まれた雲。",
+      "battlePrompt": "不死鳥フェニクスが炎の竜巻とともに上昇し、光炎を放つ戦闘シーン。赤金の羽が大きく広がり、炎と神聖な光が敵を包み込む。復活と逆転を感じる構図。"
+    },
+    {
+      "id": "rock-armor-golem",
+      "name": "岩鎧ゴーレム",
+      "slug": "rock-armor-golem",
+      "normalFile": "rock-armor-golem.png",
+      "battleFile": "rock-armor-golem-battle.png",
+      "normalPrompt": "古代遺跡を守る岩の巨人。巨大で重厚な石の体、岩の鎧、ひび割れの間から金色や赤い光がにじむ。背景は古代遺跡、地下神殿、崩れた石柱、大地のエネルギー。",
+      "battlePrompt": "岩鎧ゴーレムが巨大な拳を地面に振り下ろし、大地を砕いて衝撃波を起こす戦闘シーン。岩片と砂ぼこりが舞い、圧倒的な防御力と重量感を感じる構図。"
+    },
+    {
+      "id": "venom-hydra",
+      "name": "毒蛇ヒュドラ",
+      "slug": "venom-hydra",
+      "normalFile": "venom-hydra.png",
+      "battleFile": "venom-hydra-battle.png",
+      "normalPrompt": "複数の首を持つ毒の多頭竜。黒緑や紫を基調にした禍々しい体色、複数の頭がうねりながら威嚇する。毒の霧や紫の瘴気をまとい、背景は毒霧に包まれた沼地の遺跡。",
+      "battlePrompt": "毒蛇ヒュドラの複数の首が一斉に毒の息を吐きながら前進する戦闘シーン。紫と緑の毒霧が広がり、首が画面全体に広がる迫力ある構図。"
+    },
+    {
+      "id": "golden-griffon",
+      "name": "黄金グリフォン",
+      "slug": "golden-griffon",
+      "normalFile": "golden-griffon.png",
+      "battleFile": "golden-griffon-battle.png",
+      "normalPrompt": "獅子の体と鷲の翼を持つ神々しい幻獣。金色の羽、鋭いくちばし、力強い前脚、まばゆく光る目。背景は天空に浮かぶ古代神殿、雲海、黄金の光。空の王者のような雰囲気。",
+      "battlePrompt": "黄金グリフォンがまばゆい光をまとって空から急襲し、鋭い爪で攻撃する戦闘シーン。黄金の羽と光の軌跡が画面に広がり、高貴な空中戦を感じる構図。"
+    },
+    {
+      "id": "blaze-basilisk",
+      "name": "灼熱バジリスク",
+      "slug": "blaze-basilisk",
+      "normalFile": "blaze-basilisk.png",
+      "battleFile": "blaze-basilisk-battle.png",
+      "normalPrompt": "炎と毒をまとった大蛇のような怪物。赤黒い鱗、燃えるような眼、鋭いトサカ、毒を含んだ炎の息。背景は灼熱の岩場、赤い煙、溶岩の裂け目。",
+      "battlePrompt": "灼熱バジリスクが石化を思わせる邪眼を輝かせ、毒を含んだ炎を巻きながら突進する戦闘シーン。赤い煙と紫の毒気が混ざる危険な構図。"
+    },
+    {
+      "id": "phantom-kraken",
+      "name": "霧幻クラーケン",
+      "slug": "phantom-kraken",
+      "normalFile": "phantom-kraken.png",
+      "battleFile": "phantom-kraken-battle.png",
+      "normalPrompt": "深海と闇を支配する巨大な海魔。巨大な触手、暗い青紫の体、霧のようなオーラ、怪しく光る目。背景は霧に包まれた海、沈んだ遺跡、闇の水流。",
+      "battlePrompt": "霧幻クラーケンが巨大な触手で敵を捕らえ、闇を含んだ水流を叩きつける戦闘シーン。霧と海水が渦を巻き、深海の恐怖と迫力を感じる構図。"
+    },
+    {
+      "id": "judgement-minotaur",
+      "name": "断罪ミノタウロス",
+      "slug": "judgement-minotaur",
+      "normalFile": "judgement-minotaur.png",
+      "battleFile": "judgement-minotaur-battle.png",
+      "normalPrompt": "巨大な斧を持つ牛頭の迷宮戦士。筋肉質な巨体、黒い鎧、赤く光る目、巨大な角。背景は古代迷宮、石壁、赤い松明、崩れた柱。正面から圧倒する立ち姿。",
+      "battlePrompt": "断罪ミノタウロスが巨大な斧を振りかぶり、迷宮の石床を砕きながら突進する戦闘シーン。地と闇の力が斧に集まり、重量級の一撃を感じる構図。"
+    },
+    {
+      "id": "storm-chimera",
+      "name": "嵐刃キマイラ",
+      "slug": "storm-chimera",
+      "normalFile": "storm-chimera.png",
+      "battleFile": "storm-chimera-battle.png",
+      "normalPrompt": "複数の獣の特徴をあわせ持つ嵐の魔獣。獅子の頭、竜の翼、蛇の尾などを持ち、炎と雷をまとっている。背景は雷雲、燃える崖、嵐の荒野。",
+      "battlePrompt": "嵐刃キマイラが炎、雷、牙の連続攻撃を同時に放つ戦闘シーン。竜の翼が嵐を起こし、獅子の頭が咆哮し、蛇の尾がうねる派手な構図。"
+    },
+    {
+      "id": "netherfrost-dullahan",
+      "name": "冥氷デュラハン",
+      "slug": "netherfrost-dullahan",
+      "normalFile": "netherfrost-dullahan.png",
+      "battleFile": "netherfrost-dullahan-battle.png",
+      "normalPrompt": "闇と氷をまとった亡霊騎士。黒い鎧、青白い冷気、氷の剣、馬に乗った騎士のような姿。背景は氷霧の墓地、月夜、凍った石畳、暗い城門。",
+      "battlePrompt": "冥氷デュラハンが氷の剣で横薙ぎの斬撃を放ち、冷気をまとって騎乗突撃する戦闘シーン。氷の刃と闇の霧が広がる、かっこいい騎士戦闘の構図。"
+    },
+    {
+      "id": "moonshadow-sphinx",
+      "name": "月影スフィンクス",
+      "slug": "moonshadow-sphinx",
+      "normalFile": "moonshadow-sphinx.png",
+      "battleFile": "moonshadow-sphinx-battle.png",
+      "normalPrompt": "光と闇の謎を司る神秘的なスフィンクス。獅子の体、翼、知的な表情、額や翼に月の紋様。背景は月に照らされた砂漠遺跡、古代神殿、星空。",
+      "battlePrompt": "月影スフィンクスが光と闇の紋章を展開し、月光の魔法弾を放つ戦闘シーン。古代遺跡の上に魔法陣が浮かび、知恵と魔力を感じる構図。"
+    },
+    {
+      "id": "inferno-salamander",
+      "name": "業火サラマンダー",
+      "slug": "inferno-salamander",
+      "normalFile": "inferno-salamander.png",
+      "battleFile": "inferno-salamander-battle.png",
+      "normalPrompt": "炎の中を走るトカゲ型の魔獣。赤黒い鱗、燃える尾、鋭い爪、体の周囲に舞う火花。背景は溶岩洞窟、燃える岩、赤い煙。低く構えた攻撃的な姿。",
+      "battlePrompt": "業火サラマンダーが炎の尾を引きながら高速で駆け抜け、鋭い爪で切り裂く戦闘シーン。溶岩洞窟の中で火花と赤い軌跡が広がる構図。"
+    },
+    {
+      "id": "thunderhorn-behemoth",
+      "name": "雷角ベヒモス",
+      "slug": "thunderhorn-behemoth",
+      "normalFile": "thunderhorn-behemoth.png",
+      "battleFile": "thunderhorn-behemoth-battle.png",
+      "normalPrompt": "大地と雷の力を持つ巨大な角獣。分厚い体、巨大な角、岩のような皮膚、角に青白い雷が集まっている。背景は雷鳴の平原、割れた大地、遠くの山脈。",
+      "battlePrompt": "雷角ベヒモスが巨大な角で突進し、大地と雷を同時に轟かせる戦闘シーン。地面が割れ、青白い稲妻が角から広がる重量級の構図。"
+    },
+    {
+      "id": "deepforest-unicorn",
+      "name": "深森ユニコーン",
+      "slug": "deepforest-unicorn",
+      "normalFile": "deepforest-unicorn.png",
+      "battleFile": "deepforest-unicorn-battle.png",
+      "normalPrompt": "神秘の森にすむ光属性の聖獣。白銀の体、輝く一本角、淡い金色や緑の光をまとった美しい姿。背景は深い森、光の粒、古代樹、清らかな泉。",
+      "battlePrompt": "深森ユニコーンが輝く角から浄化の衝撃波を放つ戦闘シーン。森の光が角に集まり、金色と緑の魔力が広がる神聖で力強い構図。"
+    },
+    {
+      "id": "sky-pegasus",
+      "name": "天空ペガサス",
+      "slug": "sky-pegasus",
+      "normalFile": "sky-pegasus.png",
+      "battleFile": "sky-pegasus-battle.png",
+      "normalPrompt": "雲海を駆ける翼を持つ神馬。白銀の体、大きな翼、青白い雷光、金色のたてがみ。背景は雲海、朝焼けの空、天空の神殿、光の道。",
+      "battlePrompt": "天空ペガサスが雷光をまとって空中から突撃する戦闘シーン。白銀の翼が大きく広がり、雲海と光の軌跡を切り裂くスピード感ある構図。"
+    },
+    {
+      "id": "abyss-manticore",
+      "name": "奈落マンティコア",
+      "slug": "abyss-manticore",
+      "normalFile": "abyss-manticore.png",
+      "battleFile": "abyss-manticore-battle.png",
+      "normalPrompt": "毒と闇をまとった獅子型の魔獣。獅子の体、コウモリのような翼、サソリの尾、鋭い牙と爪。背景は奈落の谷、赤黒い霧、崩れた岩場。",
+      "battlePrompt": "奈落マンティコアが毒針を飛ばしながら牙で襲いかかる戦闘シーン。サソリの尾から紫の毒光が走り、翼と闇の霧が広がる危険な構図。"
+    },
+    {
+      "id": "ancient-anubis",
+      "name": "古代アヌビス",
+      "slug": "ancient-anubis",
+      "normalFile": "ancient-anubis.png",
+      "battleFile": "ancient-anubis-battle.png",
+      "normalPrompt": "魂を裁く古代神のようなジャッカル型の神獣。黒と金の装飾、ジャッカルの頭、光と闇の魔法をまとった立ち姿。背景は砂漠の古代神殿、黄金の石柱、星空、魔法陣。",
+      "battlePrompt": "古代アヌビスが魂の裁きを示す闇と光の魔法陣を展開する戦闘シーン。古代神殿の床に黄金の紋様が輝き、神秘的な魔法が放たれる構図。"
+    },
+    {
+      "id": "doom-bahamut",
+      "name": "終焉バハムート",
+      "slug": "doom-bahamut",
+      "normalFile": "doom-bahamut.png",
+      "battleFile": "doom-bahamut-battle.png",
+      "normalPrompt": "世界の終わりを思わせる超巨大な竜。黒と赤の巨大な翼、鋭い角、赤紫に光る胸元、圧倒的な巨体。背景は崩壊した大地、燃える空、割れた山、赤黒い雲。",
+      "battlePrompt": "終焉バハムートが口元に終焉エネルギーをため、赤紫の超大砲のようなブレスを放つ戦闘シーン。崩壊した大地と燃える空を背景にしたラスボス級の構図。"
+    },
+    {
+      "id": "peak-garuda",
+      "name": "霊峰ガルーダ",
+      "slug": "peak-garuda",
+      "normalFile": "peak-garuda.png",
+      "battleFile": "peak-garuda-battle.png",
+      "normalPrompt": "霊峰の空を舞う雷と光の神鳥。大きな翼、鋭いくちばし、金と青の羽、雷をまとった爪。背景は高い山、雲海、稲妻、神聖な空。",
+      "battlePrompt": "霊峰ガルーダが稲妻混じりの旋風を起こして急襲する戦闘シーン。金と青の羽が大きく広がり、山頂の雲海を雷の渦が包む構図。"
+    },
+    {
+      "id": "frost-jormungandr",
+      "name": "冷獄ヨルムンガンド",
+      "slug": "frost-jormungandr",
+      "normalFile": "frost-jormungandr.png",
+      "battleFile": "frost-jormungandr-battle.png",
+      "normalPrompt": "氷と毒をまとった長大な世界蛇。青黒い巨大な蛇体、氷の棘、毒の霧、冷たい目。背景は凍てつく大地、氷の峡谷、毒霧、暗い空。",
+      "battlePrompt": "冷獄ヨルムンガンドが巨体を巻きつけ、氷毒の息を噴き出す戦闘シーン。氷の棘と紫の毒霧が広がり、世界蛇の巨大さを感じる構図。"
+    },
+    {
+      "id": "hellfire-tartarus",
+      "name": "獄炎タルタロス",
+      "slug": "hellfire-tartarus",
+      "normalFile": "hellfire-tartarus.png",
+      "battleFile": "hellfire-tartarus-battle.png",
+      "normalPrompt": "炎と大地の力を持つ地獄の巨神。岩のような巨大な体、燃えるひび割れ、赤黒い炎、巨大な拳。背景は地獄の大地、火柱、溶岩、崩れた岩山。",
+      "battlePrompt": "獄炎タルタロスが巨大な拳を叩き込み、地面から火柱を噴き上げる戦闘シーン。赤黒い炎と砕けた岩が画面全体に広がる圧倒的なパワーの構図。"
+    },
+    {
+      "id": "thunder-raiju",
+      "name": "雷神獣ライジュウ",
+      "slug": "thunder-raiju",
+      "normalFile": "thunder-raiju.png",
+      "battleFile": "thunder-raiju-battle.png",
+      "normalPrompt": "雷をまとった俊敏な神獣。狼や狐に近いしなやかな体、青白い雷、鋭い目、電光のような尾。背景は夜の神社、雷雲、青白い稲妻、濡れた石段。",
+      "battlePrompt": "雷神獣ライジュウが電光石火で残像を残しながら飛びかかる戦闘シーン。夜の神社を背景に青白い雷が軌跡となって走るスピード感ある構図。"
+    },
+    {
+      "id": "yamata-orochi",
+      "name": "八岐オロチ",
+      "slug": "yamata-orochi",
+      "normalFile": "yamata-orochi.png",
+      "battleFile": "yamata-orochi-battle.png",
+      "normalPrompt": "複数の首を持つ日本神話風の巨大蛇。黒緑や深い紫の鱗、八つの首、毒と水の気配をまとっている。背景は荒れた山、濁流、毒霧、古代の祭壇。",
+      "battlePrompt": "八岐オロチの八つの首が一斉に毒水流を吐く戦闘シーン。濁流と紫の毒霧が荒れた山を包み、複数の首が画面を囲む迫力ある構図。"
+    },
+    {
+      "id": "nine-tailed-kitsune",
+      "name": "九尾ノ妖狐",
+      "slug": "nine-tailed-kitsune",
+      "normalFile": "nine-tailed-kitsune.png",
+      "battleFile": "nine-tailed-kitsune-battle.png",
+      "normalPrompt": "九本の尾を持つ炎と闇の妖しい霊獣。白銀または黒紫の毛並み、赤い瞳、九本の尾に妖しい炎が灯る。背景は月夜の森、鳥居、青紫の火の玉、赤い霧。",
+      "battlePrompt": "九尾ノ妖狐が九本の尾を大きく広げ、幻術の炎を放つ戦闘シーン。月夜の鳥居と森を背景に、青紫と赤の狐火が渦を巻く美しく怖かっこいい構図。"
+    },
+    {
+      "id": "sand-apophis",
+      "name": "砂塵アポピス",
+      "slug": "sand-apophis",
+      "normalFile": "sand-apophis.png",
+      "battleFile": "sand-apophis-battle.png",
+      "normalPrompt": "砂漠と闇を支配する巨大な蛇神。砂色と黒紫の鱗、長大な蛇体、闇の目、砂嵐をまとっている。背景は砂漠遺跡、崩れたピラミッド、砂嵐、暗い太陽。",
+      "battlePrompt": "砂塵アポピスが砂嵐と闇の波動をまとって突進する戦闘シーン。崩れたピラミッドと暗い太陽を背景に、巨大な蛇体が砂を巻き上げる構図。"
+    },
+    {
+      "id": "heaven-gargoyle",
+      "name": "天獄ガーゴイル",
+      "slug": "heaven-gargoyle",
+      "normalFile": "heaven-gargoyle.png",
+      "battleFile": "heaven-gargoyle-battle.png",
+      "normalPrompt": "城壁の上で待ち構える石の魔像。石の体、大きな翼、鋭い爪、赤または金色に光る目。背景は古城の塔、夜空、赤い月、崩れた城壁。",
+      "battlePrompt": "天獄ガーゴイルが石翼を広げて城壁から急降下し、鋭い爪で攻撃する戦闘シーン。赤い月と古城を背景に、石片と闇のオーラが舞う構図。"
+    }
+  ]
+}
