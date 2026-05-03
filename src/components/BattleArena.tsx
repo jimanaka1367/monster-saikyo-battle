@@ -149,6 +149,17 @@ const getHpPercent = (
   return result.winner.id === character.id ? 86 : 8;
 };
 
+const getRandomFighterPair = (): [MonsterCharacter, MonsterCharacter] => {
+  const firstIndex = Math.floor(Math.random() * characters.length);
+  let secondIndex = Math.floor(Math.random() * (characters.length - 1));
+
+  if (secondIndex >= firstIndex) {
+    secondIndex += 1;
+  }
+
+  return [characters[firstIndex], characters[secondIndex]];
+};
+
 function SelectedFighterPanel({
   character,
   role,
@@ -291,15 +302,19 @@ function FighterSelector({
   challenger,
   opponent,
   activeRole,
+  canStart,
   onSelectRole,
   onChooseCharacter,
+  onRandomizeFighters,
   onStartBattle,
 }: {
   challenger: MonsterCharacter;
   opponent: MonsterCharacter;
   activeRole: SelectionRole;
+  canStart: boolean;
   onSelectRole: (role: SelectionRole) => void;
   onChooseCharacter: (character: MonsterCharacter) => void;
+  onRandomizeFighters: () => void;
   onStartBattle: () => void;
 }) {
   return (
@@ -352,13 +367,30 @@ function FighterSelector({
         />
       </div>
 
-      <button
-        type="button"
-        onClick={onStartBattle}
-        className="fantasy-button fantasy-button-gold mt-4 w-full text-lg"
-      >
-        この2体でバトル開始
-      </button>
+      <div className="mt-4 grid gap-2 sm:grid-cols-[0.9fr_1.1fr]">
+        <button
+          type="button"
+          onClick={onRandomizeFighters}
+          className="fantasy-button fantasy-button-purple min-h-12 py-2 text-sm sm:min-h-14 sm:py-3 sm:text-base"
+        >
+          ランダムで2体を選ぶ
+        </button>
+        <button
+          type="button"
+          onClick={onStartBattle}
+          disabled={!canStart}
+          className={`fantasy-button fantasy-button-gold min-h-12 py-2 text-sm sm:min-h-14 sm:py-3 sm:text-base ${
+            canStart ? "" : "cursor-not-allowed opacity-55"
+          }`}
+        >
+          この2体でバトル開始
+        </button>
+      </div>
+      {!canStart ? (
+        <p className="mt-2 text-xs font-bold text-amber-100">
+          別々の2体を選ぶとバトルを開始できます。
+        </p>
+      ) : null}
 
       <div className="mt-5 max-h-[38rem] overflow-y-auto pr-1">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
@@ -754,6 +786,7 @@ function ScoreMini({
 }
 
 export function BattleArena() {
+  const selectorRef = useRef<HTMLDivElement>(null);
   const battleStageRef = useRef<HTMLDivElement>(null);
   const [challengerId, setChallengerId] = useState(characters[0].id);
   const [opponentId, setOpponentId] = useState(characters[1].id);
@@ -774,15 +807,18 @@ export function BattleArena() {
     [opponentId],
   );
 
-  const startBattle = () => {
-    if (challenger.id === opponent.id) {
-      return;
-    }
-
-    setResult(createBattleResult(challenger, opponent));
-    setPhase("opening");
+  const scrollToBattleStage = () => {
     window.requestAnimationFrame(() => {
       battleStageRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  };
+
+  const scrollToSelector = () => {
+    window.requestAnimationFrame(() => {
+      selectorRef.current?.scrollIntoView({
         behavior: "smooth",
         block: "start",
       });
@@ -792,6 +828,48 @@ export function BattleArena() {
   const resetBattle = () => {
     setPhase("ready");
     setResult(null);
+  };
+
+  const startBattleWithCharacters = (
+    nextChallenger: MonsterCharacter,
+    nextOpponent: MonsterCharacter,
+  ) => {
+    if (nextChallenger.id === nextOpponent.id) {
+      return;
+    }
+
+    setChallengerId(nextChallenger.id);
+    setOpponentId(nextOpponent.id);
+    setActiveRole("challenger");
+    setResult(null);
+    setPhase("ready");
+    setResult(createBattleResult(nextChallenger, nextOpponent));
+    setPhase("opening");
+    scrollToBattleStage();
+  };
+
+  const startBattle = () => {
+    startBattleWithCharacters(challenger, opponent);
+  };
+
+  const randomizeFighters = () => {
+    const [nextChallenger, nextOpponent] = getRandomFighterPair();
+
+    setChallengerId(nextChallenger.id);
+    setOpponentId(nextOpponent.id);
+    setActiveRole("challenger");
+    resetBattle();
+  };
+
+  const randomRematch = () => {
+    const [nextChallenger, nextOpponent] = getRandomFighterPair();
+
+    startBattleWithCharacters(nextChallenger, nextOpponent);
+  };
+
+  const reselectCharacters = () => {
+    resetBattle();
+    scrollToSelector();
   };
 
   const chooseCharacter = (character: MonsterCharacter) => {
@@ -824,6 +902,7 @@ export function BattleArena() {
 
   const challengerScore = getScoreForCharacter(challenger, result);
   const opponentScore = getScoreForCharacter(opponent, result);
+  const canStartBattle = challenger.id !== opponent.id;
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -837,14 +916,18 @@ export function BattleArena() {
         </p>
       </div>
 
-      <FighterSelector
-        challenger={challenger}
-        opponent={opponent}
-        activeRole={activeRole}
-        onSelectRole={setActiveRole}
-        onChooseCharacter={chooseCharacter}
-        onStartBattle={startBattle}
-      />
+      <div ref={selectorRef} className="scroll-mt-2 sm:scroll-mt-4">
+        <FighterSelector
+          challenger={challenger}
+          opponent={opponent}
+          activeRole={activeRole}
+          canStart={canStartBattle}
+          onSelectRole={setActiveRole}
+          onChooseCharacter={chooseCharacter}
+          onRandomizeFighters={randomizeFighters}
+          onStartBattle={startBattle}
+        />
+      </div>
 
       <div
         ref={battleStageRef}
@@ -927,13 +1010,29 @@ export function BattleArena() {
           </button>
         ) : null}
         {phase === "result" ? (
-          <button
-            type="button"
-            onClick={startBattle}
-            className="fantasy-button fantasy-button-purple min-h-11 py-2 text-sm sm:min-h-14 sm:py-3 sm:text-base"
-          >
-            もう一度バトル
-          </button>
+          <div className="grid w-full gap-2 sm:w-auto sm:grid-cols-3">
+            <button
+              type="button"
+              onClick={startBattle}
+              className="fantasy-button fantasy-button-purple min-h-11 py-2 text-sm sm:min-h-14 sm:py-3 sm:text-base"
+            >
+              もう一度バトル
+            </button>
+            <button
+              type="button"
+              onClick={reselectCharacters}
+              className="fantasy-button fantasy-button-red min-h-11 py-2 text-sm sm:min-h-14 sm:py-3 sm:text-base"
+            >
+              キャラを選び直す
+            </button>
+            <button
+              type="button"
+              onClick={randomRematch}
+              className="fantasy-button fantasy-button-gold min-h-11 py-2 text-sm sm:min-h-14 sm:py-3 sm:text-base"
+            >
+              ランダムで再戦
+            </button>
+          </div>
         ) : null}
       </div>
     </div>
