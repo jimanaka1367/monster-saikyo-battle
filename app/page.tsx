@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { BattleArena } from "@/src/components/BattleArena";
 import { CharacterCard } from "@/src/components/CharacterCard";
 import { TournamentBracket } from "@/src/components/TournamentBracket";
@@ -41,6 +42,12 @@ export default function Home() {
             >
               トーナメント
             </a>
+            <Link
+              href="/gacha"
+              className="fantasy-button fantasy-button-gold"
+            >
+              ガチャへ
+            </Link>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3">
